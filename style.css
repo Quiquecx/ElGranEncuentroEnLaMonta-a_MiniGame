@@ -1,0 +1,297 @@
+/* ======================================================================
+   0. VARIABLES Y CONFIGURACIÓN BASE
+   ====================================================================== */
+   :root {
+    --primary-purple: #702283;   
+    --accent-orange: #e84e0f;    
+    --success-green: #2ecc71;    
+    --wrong-red: #e74c3c;        
+    --bg: #0f1720;               
+    --accent-gold: #ffd166;      
+    --font-game: "Press Start 2P", cursive;
+}
+
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    background: radial-gradient(circle at center, #2d0e35 0%, #0b0b1a 100%);
+    color: #edf2f7;
+    font-family: Arial, sans-serif; 
+    overflow: hidden; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation; 
+}
+
+.hidden { display: none !important; }
+
+/* ======================================================================
+   1. CONTENEDOR DEL JUEGO (MARCO FIJO 900x600)
+   ====================================================================== */
+#game-container {
+    width: 100vw; 
+    height: 100vh;
+    max-width: 900px; 
+    max-height: 600px;
+    aspect-ratio: 900 / 600; 
+    position: fixed; 
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 5px solid var(--accent-gold); 
+    outline: 3px solid var(--primary-purple);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 209, 102, 0.3);
+    background-color: var(--bg);
+    overflow: hidden;
+    display: flex; 
+    flex-direction: column;
+}
+
+@media (max-width: 900px) or (max-height: 600px) {
+    #game-container {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        position: static;
+        transform: none;
+    }
+}
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    image-rendering: pixelated; 
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+/* ======================================================================
+   2. PANTALLAS Y UI
+   ====================================================================== */
+.screen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(circle, #2d0e35 0%, #0b1220 100%);
+    z-index: 100;
+    text-align: center;
+    padding: 20px;
+}
+
+/* El mapa debe ser transparente para que los botones y HUD floten */
+#map-screen { 
+    background: transparent; 
+    z-index: 10; 
+    pointer-events: none; 
+}
+
+h1.main-title {
+    font-family: var(--font-game);
+    color: var(--accent-gold);
+    font-size: clamp(18px, 4vw, 32px);
+    margin-bottom: 20px;
+    text-shadow: 4px 4px 0px #000;
+}
+
+/* ======================================================================
+   3. BOTONES Y OPCIONES
+   ====================================================================== */
+button {
+    cursor: pointer;
+    border: 4px solid #000;
+    padding: 12px 20px;
+    font-family: var(--font-game);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: white;
+    margin: 8px 0;
+    transition: 0.1s;
+    pointer-events: auto; /* Asegura que los botones normales funcionen */
+}
+
+.btn-primary { background: #27ae60; box-shadow: 0 6px 0 #1b7a43; }
+.btn-secondary, .choice { background: var(--accent-orange); box-shadow: 0 6px 0 #a0360b; }
+
+button:hover { filter: brightness(1.2); transform: scale(1.05); }
+button:active { transform: translateY(4px); box-shadow: none; }
+
+/* ======================================================================
+   4. CONTROLES TÁCTILES GLOBALES (CORREGIDO)
+   ====================================================================== */
+#mobile-controls {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none; 
+    z-index: 2000; /* Por encima de pantallas y modales */
+}
+
+.controls-left, .controls-right { 
+    display: flex; 
+    gap: 20px; 
+    pointer-events: auto; 
+}
+
+.touch-btn {
+    width: 75px; height: 75px;
+    background: rgba(0, 0, 0, 0.5); 
+    backdrop-filter: blur(5px);
+    border: 3px solid var(--accent-gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; color: white;
+    user-select: none; 
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none; 
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+}
+
+.touch-btn:active { 
+    background: var(--accent-orange); 
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+/* ======================================================================
+   5. MECÁNICA ZONA 2: ARRASTRAR Y SOLTAR
+   ====================================================================== */
+.drop-zone {
+    width: 100%;
+    min-height: 60px;
+    border: 3px dashed var(--accent-gold);
+    margin: 15px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+}
+
+.draggable-word {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 5px;
+    background: #fff;
+    color: var(--bg);
+    border: 2px solid var(--primary-purple);
+    font-family: var(--font-game);
+    font-size: 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+/* ======================================================================
+   6. MODAL Y HUD
+   ====================================================================== */
+.modal-content {
+    background: #161625;
+    padding: 25px;
+    border: 6px solid var(--accent-gold);
+    width: 90%;
+    max-width: 550px;
+    box-shadow: 10px 10px 0px rgba(0,0,0,0.5);
+    animation: openModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto;
+}
+
+#hud {
+    position: absolute;
+    top: 15px; left: 15px; right: 15px;
+    display: flex; justify-content: space-between;
+    pointer-events: none; 
+    z-index: 1500; /* Encima del mapa pero debajo de los controles */
+}
+
+#gem-count-display {
+    background: rgba(0,0,0,0.8);
+    padding: 8px 15px;
+    border: 2px solid var(--accent-gold);
+    font-family: var(--font-game);
+    font-size: 12px; color: var(--accent-gold);
+}
+
+/* ======================================================================
+   7. FINAL: COFRE Y GEMAS
+   ====================================================================== */
+.final-gems-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.gem-mini {
+    width: 45px;
+    height: 45px;
+    filter: drop-shadow(0 0 8px gold);
+    animation: floatingGems 2s ease-in-out infinite;
+}
+
+@keyframes floatingGems {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* ======================================================================
+   8. EFECTOS
+   ====================================================================== */
+.feedback-correct { color: var(--success-green) !important; text-shadow: 0 0 10px var(--success-green); }
+.feedback-wrong { color: var(--wrong-red) !important; animation: shake 0.4s; }
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+@keyframes openModal {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* --- ESTILOS DEL COFRE FINAL --- */
+#treasure-chest-anim {
+    width: 180px;
+    height: 180px;
+    margin: 0 auto 20px auto;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.chest-closed { background-image: url('src/imgs/general/L8 Cofre cerrado.png'); }
+.chest-open {
+    background-image: url('src/imgs/general/L8 Cofre abierto.png') !important;
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 30px #FFD700);
+}
+
+#final-rank-text { animation: pulseText 1.5s infinite; }
+
+@keyframes pulseText {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
