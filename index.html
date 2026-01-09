@@ -5,34 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>La Gran Expedición a la Montaña Sagrada</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div id="game-container">
         
         <div id="menu" class="screen">
-            <h1 class="main-title">La Gran Expedición</h1>
-            <h2 class="sub-title">A la Montaña Sagrada</h2>
-            <p class="intro-text" style="margin-bottom: 20px;">¡Encuentra el tesoro del encuentro con Dios!</p>
+            <h1 class="main-title">El Gran Encuentro</h1>
+            <h2 class="sub-title">En la Montaña Sagrada</h2>
+            <p class="intro-text">¡Encuentra el tesoro del encuentro con Dios!</p>
             
             <div class="menu-buttons">
                 <button id="start-game" class="btn-primary">Iniciar Expedición</button>
                 <button id="how-to" class="btn-secondary">Cómo Jugar</button>
             </div>
+
+            <footer class="copyright-notice">
+                © Todos los derechos reservados Librerías y Ediciones Casa del Catequista
+            </footer>
         </div>
 
         <div id="howto-screen" class="screen hidden">
             <div class="modal-content">
-                <h2 style="font-family: 'Press Start 2P'; font-size: 16px; margin-bottom: 20px; color: #FFD700;">Instrucciones</h2>
-                <ul class="instructions-list" style="list-style: none; text-align: left; margin-bottom: 20px;">
-                    <li>🏔️ Explora las 3 zonas de la montaña.</li>
-                    <li>💎 Supera retos para reunir las gemas.</li>
-                    <li>⌨️ PC: Flechas/WASD para mover y Espacio para saltar.</li>
-                    <li>📱 Tablet: Botones izquierda/derecha y arriba para saltar.</li>
-                    <li>🎯 Toca los cofres para iniciar los desafíos.</li>
+                <h2 class="modal-header">Cómo Jugar</h2>
+                <ul class="instructions-list" style="list-style: none; padding: 0; color: #333; margin: 20px 0; text-align: left;">
+                    <li style="margin-bottom: 10px;">🏔️ Explora las 3 zonas de la montaña.</li>
+                    <li style="margin-bottom: 10px;">💎 Supera retos para reunir las gemas.</li>
+                    <li style="margin-bottom: 10px;">⌨️ PC: Flechas/WASD para mover y Espacio para saltar.</li>
+                    <li style="margin-bottom: 10px;">📱 Tablet: Usa los botones en pantalla.</li>
+                    <li style="margin-bottom: 10px;">🎯 Toca los cofres para iniciar los desafíos.</li>
                 </ul>
-                <button id="close-howto" class="btn-secondary">Entendido</button>
+                <button id="close-howto" class="btn-secondary">¡Entendido!</button>
             </div>
         </div>
 
@@ -54,49 +58,30 @@
                 </div>
             </div>
         </div>
-        
+
         <div id="trivia-modal" class="screen hidden">
             <div class="modal-content">
-                <div id="timer-container">
-                    ⏱️ TIEMPO: <span id="timer-count">15</span>s
-                </div>
-
+                <div id="timer-container" class="hidden">⏱️ <span id="timer-count">15</span>s</div>
                 <h2 id="trivia-title">Reto</h2>
-                
-                <img id="current-sacramento-img" src="" alt="Reto" style="max-height: 120px;">
-        
-                <div id="options-container" class="menu-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 100%; min-height: 100px;">
-                    </div>
+                <img id="current-sacramento-img" src="" alt="Reto" style="max-height: 150px; display: block; margin: 0 auto;">
+                <div id="options-container" class="menu-buttons" style="gap: 10px; margin-top: 20px;"></div>
             </div>
         </div>
 
-        <div id="victory-screen" class="screen hidden">
-            <div class="modal-content" style="border-color: #4CAF50;">
-                <h1 class="feedback-correct" style="font-family: 'Press Start 2P'; font-size: 24px;">¡LOGRADO!</h1>
-                <p id="victory-msg" style="margin: 20px 0; font-size: 16px;">Has completado los desafíos de esta zona.</p>
-                <div id="final-gems-visual" class="final-gems-container">
-                    <span style="font-size: 50px;">🏆</span>
+        <div id="final-treasure-screen" class="screen hidden">
+            <div class="modal-content transparent">
+                <h1 id="final-title">¡EL TESORO DE LA MONTAÑA!</h1>
+                <div id="treasure-chest-anim" class="chest-closed"></div>
+                <div id="final-message-container">
+                    <p id="final-rank-text"></p>
+                    <div id="stats-summary"></div>
                 </div>
-                <button id="btn-victory-next" class="btn-primary">Continuar</button>
+                <button id="btn-restart" class="btn-primary">JUGAR DE NUEVO</button>
+                <p class="copyright-notice-white">© Librerías y Ediciones Casa del Catequista</p>
             </div>
         </div>
 
     </div>
-
-    <div id="final-treasure-screen" class="screen hidden" style="background: radial-gradient(circle, #1a2a6c, #000); z-index: 3000;">
-            <div class="modal-content" style="background: transparent; border: none; box-shadow: none;">
-                <h1 id="final-title" style="font-family: 'Press Start 2P'; font-size: 20px; color: #FFF; margin-bottom: 20px;">¡EL TESORO DE LA MONTAÑA!</h1>
-                
-                <div id="treasure-chest-anim" class="chest-closed"></div>
-                
-                <div id="final-message-container" style="background: rgba(0,0,0,0.6); padding: 20px; border-radius: 15px; border: 2px solid #FFD700;">
-                    <p id="final-rank-text" style="font-family: 'Press Start 2P'; font-size: 14px; margin-bottom: 15px;"></p>
-                    <div id="stats-summary" style="font-size: 16px; color: white; line-height: 1.6;"></div>
-                </div>
-
-                <button id="btn-restart" class="btn-primary" style="margin-top: 30px;">JUGAR DE NUEVO</button>
-            </div>
-        </div>
 
     <script type="module" src="src/js/main.js"></script>
 </body>

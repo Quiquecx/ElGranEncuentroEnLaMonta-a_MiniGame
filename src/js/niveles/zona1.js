@@ -1,28 +1,25 @@
 /* ====================================================================== 
-   ZONA 1: EL VALLE DEL DESCUBRIMIENTO (Sacramentos) 
+   ZONA 1: EL VALLE DEL DESCUBRIMIENTO (Versión Final Completa)
    ====================================================================== */
    import { zona1Data } from '../../data/preguntas.js';
    import { sonidos } from '../main.js';
    
    export function iniciarZona1(onComplete) {
-       // --- 1. REFERENCIAS AL DOM ---
        const canvas = document.getElementById('map-canvas');
        const ctx = canvas.getContext('2d');
        const modal = document.getElementById('trivia-modal');
+       
        const timerDisplay = document.getElementById('timer-count');
        const gemDisplay = document.getElementById('gem-count');
-       
-       // Botones táctiles
        const btnLeft = document.getElementById('btn-left');
        const btnRight = document.getElementById('btn-right');
        const btnJump = document.getElementById('btn-jump');
    
-       // --- 2. CONFIGURACIÓN Y ESTADO ---
        const VIEWPORT_WIDTH = 900;
        const WORLD_WIDTH = 1280;
        const GROUND_Y = 450;
    
-       let nivelActivo = true;
+       let nivelActivo = false;
        let esperandoRespuesta = false;
        let cameraX = 0;
        let gemasRecolectadas = 0;
@@ -30,19 +27,15 @@
        let timerInterval = null;
        let requestID = null;
    
-       // --- 3. ASSETS (IMÁGENES) ---
        const assets = {
-           fondo: new Image(),
-           cofreC: new Image(),
-           cofreA: new Image(),
-           player: new Image()
+           fondo: new Image(), cofreC: new Image(),
+           cofreA: new Image(), player: new Image()
        };
        assets.fondo.src = 'src/imgs/fondos/fondo_level1.png';
        assets.cofreC.src = 'src/imgs/general/L8 Cofre cerrado.png';
        assets.cofreA.src = 'src/imgs/general/L8 Cofre abierto.png';
        assets.player.src = 'src/imgs/protagonistas/Niña 01.png';
    
-       // --- 4. ENTIDADES DEL JUEGO ---
        let player = {
            x: 100, y: GROUND_Y, w: 70, h: 90,
            speed: 4.5, vy: 0, gravity: 0.6,
@@ -50,9 +43,9 @@
        };
    
        const plataformas = [
-           { x: 300, y: 350, w: 150, h: 20 },
-           { x: 550, y: 250, w: 150, h: 20 },
-           { x: 850, y: 350, w: 150, h: 20 }
+           { x: 300, y: 350, w: 150, h: 25 },
+           { x: 550, y: 250, w: 150, h: 25 },
+           { x: 850, y: 350, w: 150, h: 25 }
        ];
    
        let cofres = zona1Data.slice(0, 7).map((data, i) => {
@@ -63,121 +56,52 @@
            return { ...data, x: positions[i].x, y: positions[i].y, w: 60, h: 60, abierto: false };
        });
    
-       // --- 5. SISTEMA DE CONTROLES ---
        const keys = {};
    
        const saltar = () => {
            if (!player.isJumping && !esperandoRespuesta && nivelActivo) {
-               player.vy = player.jumpPower;
-               player.isJumping = true;
-               sonidos.salto.currentTime = 0;
-               sonidos.salto.play().catch(()=>{});
+               player.vy = player.jumpPower; player.isJumping = true;
+               sonidos.salto.currentTime = 0; sonidos.salto.play().catch(()=>{});
            }
        };
    
-       const handleKeyDown = (e) => {
-           keys[e.code] = true;
-           if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) saltar();
-       };
+       const handleKeyDown = (e) => { keys[e.code] = true; if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) saltar(); };
        const handleKeyUp = (e) => keys[e.code] = false;
+   
+       function limpiarListeners() {
+           window.removeEventListener('keydown', handleKeyDown);
+           window.removeEventListener('keyup', handleKeyUp);
+           clearInterval(timerInterval);
+       }
    
        window.addEventListener('keydown', handleKeyDown);
        window.addEventListener('keyup', handleKeyUp);
    
-       // Vinculación Táctil
-       if (btnLeft) {
-           btnLeft.onpointerdown = (e) => { e.preventDefault(); keys['ArrowLeft'] = true; };
-           btnLeft.onpointerup = (e) => { e.preventDefault(); keys['ArrowLeft'] = false; };
-           btnLeft.onpointerleave = () => keys['ArrowLeft'] = false;
+       if (btnLeft) { 
+           btnLeft.onpointerdown = (e) => { e.preventDefault(); keys['ArrowLeft'] = true; }; 
+           btnLeft.onpointerup = () => keys['ArrowLeft'] = false; 
        }
-       if (btnRight) {
-           btnRight.onpointerdown = (e) => { e.preventDefault(); keys['ArrowRight'] = true; };
-           btnRight.onpointerup = (e) => { e.preventDefault(); keys['ArrowRight'] = false; };
-           btnRight.onpointerleave = () => keys['ArrowRight'] = false;
+       if (btnRight) { 
+           btnRight.onpointerdown = (e) => { e.preventDefault(); keys['ArrowRight'] = true; }; 
+           btnRight.onpointerup = () => keys['ArrowRight'] = false; 
        }
-       if (btnJump) {
-           btnJump.onpointerdown = (e) => { e.preventDefault(); saltar(); };
-       }
+       if (btnJump) { btnJump.onpointerdown = (e) => { e.preventDefault(); saltar(); }; }
    
-       // --- 6. LÓGICA (UPDATE) ---
-       function update() {
-           if (!nivelActivo || esperandoRespuesta) {
-               sonidos.pasos.pause();
-               return;
-           }
-           tiempoEnNivel++;
-   
-           let moviendose = false;
-           if (keys['ArrowRight'] || keys['KeyD']) {
-               player.x += player.speed;
-               player.facingRight = true;
-               moviendose = true;
-           }
-           if (keys['ArrowLeft'] || keys['KeyA']) {
-               player.x -= player.speed;
-               player.facingRight = false;
-               moviendose = true;
-           }
-   
-           if (moviendose && !player.isJumping) {
-               if (sonidos.pasos.paused) sonidos.pasos.play().catch(()=>{});
-           } else {
-               sonidos.pasos.pause();
-           }
-   
-           player.vy += player.gravity;
-           player.y += player.vy;
-   
-           if (player.y > GROUND_Y) {
-               player.y = GROUND_Y;
-               player.vy = 0;
-               player.isJumping = false;
-           }
-   
-           // Colisión con plataformas
-           plataformas.forEach(plat => {
-               if (player.vy > 0 && player.x + player.w > plat.x && player.x < plat.x + plat.w &&
-                   player.y + player.h > plat.y && player.y + player.h < plat.y + 10) {
-                   player.y = plat.y - player.h;
-                   player.vy = 0;
-                   player.isJumping = false;
-               }
-           });
-   
-           player.x = Math.max(0, Math.min(WORLD_WIDTH - player.w, player.x));
-           cameraX = Math.max(0, Math.min(WORLD_WIDTH - VIEWPORT_WIDTH, player.x - VIEWPORT_WIDTH / 2));
-   
-           // Solo permitir abrir cofres después de un pequeño delay inicial
-           if (tiempoEnNivel > 30) {
-               cofres.forEach(cofre => {
-                   if (!cofre.abierto && player.x < cofre.x + cofre.w && player.x + player.w > cofre.x && player.y < cofre.y + cofre.h && player.y + player.h > cofre.y) {
-                       iniciarTrivia(cofre);
-                   }
-               });
-           }
-       }
-   
-       // --- 7. TRIVIA ---
        function iniciarTrivia(cofre) {
            esperandoRespuesta = true;
            sonidos.pasos.pause();
            sonidos.abrirCofre.currentTime = 0;
            sonidos.abrirCofre.play().catch(()=>{});
-   
            Object.keys(keys).forEach(k => keys[k] = false);
    
            modal.classList.remove('hidden');
-           document.getElementById('current-sacramento-img').src = cofre.img;
+           const imgEl = document.getElementById('current-sacramento-img');
+           if(imgEl) imgEl.src = cofre.img;
    
            const titulo = document.getElementById('trivia-title');
            const container = document.getElementById('options-container');
            titulo.innerText = "¡ADIVINA EL SACRAMENTO!";
-           container.innerHTML = '';
-   
-           const pistaTxt = document.createElement('p');
-           pistaTxt.innerText = cofre.mensaje;
-           pistaTxt.style.cssText = "color:#00FFFF; margin-bottom:15px; font-size:14px; text-align:center;";
-           container.appendChild(pistaTxt);
+           container.innerHTML = `<p style="color:#00FFFF; text-align:center; font-size:14px; margin-bottom:10px;">${cofre.mensaje}</p>`;
    
            let tiempoRestante = 15;
            timerDisplay.innerText = tiempoRestante;
@@ -187,7 +111,6 @@
                timerDisplay.innerText = tiempoRestante;
                if (tiempoRestante <= 0) {
                    clearInterval(timerInterval);
-                   sonidos.error.play().catch(()=>{});
                    modal.classList.add('hidden');
                    esperandoRespuesta = false;
                }
@@ -206,9 +129,7 @@
                btn.onclick = () => {
                    if (opt === cofre.nombre) {
                        clearInterval(timerInterval);
-                       sonidos.correcto.currentTime = 0;
                        sonidos.correcto.play().catch(()=>{});
-                       
                        gemasRecolectadas++;
                        cofre.abierto = true;
                        gemDisplay.innerText = gemasRecolectadas;
@@ -219,7 +140,6 @@
                            if (gemasRecolectadas >= 7) finalizarNivel();
                        }, 800);
                    } else {
-                       sonidos.error.currentTime = 0;
                        sonidos.error.play().catch(()=>{});
                        titulo.innerText = "¡INTENTA DE NUEVO! ❌";
                    }
@@ -228,64 +148,200 @@
            });
        }
    
-       // --- 8. RENDERIZADO (DRAW) ---
-       function draw() {
-           ctx.clearRect(0, 0, canvas.width, canvas.height);
-           ctx.save();
-           ctx.translate(-cameraX, 0);
+       function update() {
+           if (!nivelActivo || esperandoRespuesta) return;
+           tiempoEnNivel++;
+           
+           let moviendose = false;
+           if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; player.facingRight = true; moviendose = true; }
+           if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; player.facingRight = false; moviendose = true; }
    
-           if (assets.fondo.complete) ctx.drawImage(assets.fondo, 0, 0, WORLD_WIDTH, canvas.height);
+           if (moviendose && !player.isJumping) {
+               if (sonidos.pasos.paused) sonidos.pasos.play().catch(()=>{});
+           } else { sonidos.pasos.pause(); }
    
-           // Dibujar plataformas (opcional, invisibles si el fondo ya las tiene)
-           ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-           plataformas.forEach(plat => ctx.fillRect(plat.x, plat.y, plat.w, plat.h));
+           player.vy += player.gravity;
+           player.y += player.vy;
+           if (player.y > GROUND_Y) { player.y = GROUND_Y; player.vy = 0; player.isJumping = false; }
    
-           cofres.forEach(cofre => {
-               let img = cofre.abierto ? assets.cofreA : assets.cofreC;
-               if (img.complete) ctx.drawImage(img, cofre.x, cofre.y, cofre.w, cofre.h);
-           });
-   
-           if (assets.player.complete) {
-               ctx.save();
-               if (!player.facingRight) {
-                   ctx.translate(player.x + player.w, player.y);
-                   ctx.scale(-1, 1);
-                   ctx.drawImage(assets.player, 0, 0, player.w, player.h);
-               } else {
-                   ctx.drawImage(assets.player, player.x, player.y, player.w, player.h);
+           // --- LÓGICA DE PLATAFORMAS (LADRILLO SÓLIDO) ---
+           for (let plat of plataformas) {
+               if (player.x + player.w > plat.x && player.x < plat.x + plat.w) {
+                   // Aterrizar (Arriba)
+                   if (player.vy > 0 && player.y + player.h > plat.y && player.y + player.h < plat.y + 25) {
+                       player.y = plat.y - player.h;
+                       player.vy = 0;
+                       player.isJumping = false;
+                   } 
+                   // Chocar Cabeza (Abajo)
+                   else if (player.vy < 0 && player.y > plat.y + plat.h - 15 && player.y < plat.y + plat.h) {
+                       player.y = plat.y + plat.h;
+                       player.vy = 0;
+                   }
                }
-               ctx.restore();
            }
    
-           ctx.restore();
+           player.x = Math.max(0, Math.min(WORLD_WIDTH - player.w, player.x));
+           cameraX = Math.max(0, Math.min(WORLD_WIDTH - VIEWPORT_WIDTH, player.x - VIEWPORT_WIDTH / 2));
+   
+           // --- DETECCIÓN DE COFRES ESTRICTA ---
+           cofres.forEach(cofre => {
+               if (!cofre.abierto) {
+                   const margen = 20; 
+                   const colH = player.x + player.w - margen > cofre.x && player.x + margen < cofre.x + cofre.w;
+                   const colV = player.y + player.h - margen > cofre.y && player.y + margen < cofre.y + cofre.h;
+   
+                   if (colH && colV) {
+                       iniciarTrivia(cofre);
+                   }
+               }
+           });
        }
    
-       // --- 9. FINALIZACIÓN ---
-       function finalizarNivel() {
-           nivelActivo = false;
-           sonidos.pasos.pause();
-           sonidos.victoria.currentTime = 0;
-           sonidos.victoria.play().catch(()=>{});
+       function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(-Math.floor(cameraX), 0);
+        
+        if (assets.fondo.complete) ctx.drawImage(assets.fondo, 0, 0, WORLD_WIDTH, canvas.height);
+        
+        // --- DIBUJO DE PLATAFORMAS TIPO LADRILLO ---
+        plataformas.forEach(plat => {
+            // Cuerpo del ladrillo (Color base terracota)
+            ctx.fillStyle = "#A52A2A"; 
+            ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+
+            // Borde superior (Brillo/Relieve)
+            ctx.fillStyle = "#E9967A";
+            ctx.fillRect(plat.x, plat.y, plat.w, 3);
+
+            // Borde inferior (Sombra)
+            ctx.fillStyle = "#5D1919";
+            ctx.fillRect(plat.x, plat.y + plat.h - 3, plat.w, 3);
+
+            // Dibujar líneas divisorias de ladrillos
+            ctx.strokeStyle = "#5D1919";
+            ctx.lineWidth = 2;
+            
+            // Línea central horizontal opcional
+            // ctx.strokeRect(plat.x, plat.y, plat.w, plat.h); 
+
+            // Divisiones verticales (hacemos 3 ladrillos por plataforma)
+            const numLadrillos = 3;
+            const anchoLadrillo = plat.w / numLadrillos;
+            for(let i = 1; i < numLadrillos; i++) {
+                ctx.beginPath();
+                ctx.moveTo(plat.x + (i * anchoLadrillo), plat.y);
+                ctx.lineTo(plat.x + (i * anchoLadrillo), plat.y + plat.h);
+                ctx.stroke();
+            }
+            
+            // Contorno general para que resalte
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
+        });
+
+        // --- DIBUJO DE COFRES ---
+        cofres.forEach(cofre => {
+            const img = cofre.abierto ? assets.cofreA : assets.cofreC;
+            if (img.complete) ctx.drawImage(img, cofre.x, cofre.y, cofre.w, cofre.h);
+        });
+
+        // --- DIBUJO DEL JUGADOR ---
+        if (assets.player.complete) {
+            ctx.save();
+            if (!player.facingRight) {
+                ctx.translate(player.x + player.w, player.y); ctx.scale(-1, 1);
+                ctx.drawImage(assets.player, 0, 0, player.w, player.h);
+            } else { 
+                ctx.drawImage(assets.player, player.x, player.y, player.w, player.h); 
+            }
+            ctx.restore();
+        }
+        ctx.restore();
+    }
    
-           cancelAnimationFrame(requestID);
-           window.removeEventListener('keydown', handleKeyDown);
-           window.removeEventListener('keyup', handleKeyUp);
-   
-           document.getElementById('victory-screen').classList.remove('hidden');
-           document.getElementById('btn-victory-next').onclick = () => {
-               document.getElementById('victory-screen').classList.add('hidden');
-               onComplete(gemasRecolectadas);
-           };
-       }
-   
-       // --- 10. CICLO PRINCIPAL ---
        function loop() {
-           if (!nivelActivo) return;
+           if (!nivelActivo && !esperandoRespuesta) return;
            update();
            draw();
            requestID = requestAnimationFrame(loop);
        }
    
-       if (assets.player.complete) loop();
-       else assets.player.onload = loop;
+       function mostrarMensajeInicio() {
+           esperandoRespuesta = true;
+           modal.classList.remove('hidden');
+           document.getElementById('trivia-title').innerText = "EL VALLE DEL DESCUBRIMIENTO";
+           document.getElementById('options-container').innerHTML = `
+               <p style="color:white; text-align:center; margin-bottom:20px;">
+                   Debes subir a las plataformas para alcanzar los cofres sagrados. 
+                   ¡No podrás abrirlos desde abajo!
+               </p>
+               <button class="choice" id="btn-start">¡EMPEZAR!</button>
+           `;
+           document.getElementById('btn-start').onclick = () => {
+               modal.classList.add('hidden');
+               esperandoRespuesta = false; nivelActivo = true;
+               loop();
+           };
+       }
+   
+       function finalizarNivel() {
+        nivelActivo = false;
+        limpiarListeners();
+        cancelAnimationFrame(requestID);
+        
+        sonidos.pasos.pause();
+        sonidos.victoria.play().catch(()=>{});
+
+        // 1. Ocultar la imagen de la trivia (sacramento) para que no estorbe
+        const imgTrivia = document.getElementById('current-sacramento-img');
+        if (imgTrivia) imgTrivia.style.display = 'none';
+
+        modal.classList.remove('hidden');
+        
+        document.getElementById('trivia-title').innerText = "¡NIVEL COMPLETADO!";
+        
+        // 2. Usar el emoji de diamante con estilo de brillo
+        document.getElementById('options-container').innerHTML = `
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="font-size: 80px; filter: drop-shadow(0 0 15px #00FFFF); animation: pulse 1.5s infinite;">
+                    💎
+                </div>
+                <p style="color:white; font-size:18px; margin-top:15px; font-weight:bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                    ¡Has obtenido la Gema del Valle!
+                </p>
+                <p style="color:#00FFFF; font-size:14px; margin-top:5px;">
+                    ¡Los 7 Sacramentos han sido revelados!
+                </p>
+            </div>
+            <button class="choice" id="btn-finish">RECLAMAR Y VOLVER AL MAPA</button>
+        `;
+
+        // 3. Estilo de animación para que el emoji palpite
+        if (!document.getElementById('pulse-animation')) {
+            const style = document.createElement('style');
+            style.id = 'pulse-animation';
+            style.innerHTML = `
+                @keyframes pulse {
+                    0% { transform: scale(1); filter: drop-shadow(0 0 10px #00FFFF); }
+                    50% { transform: scale(1.2); filter: drop-shadow(0 0 25px #00FFFF); }
+                    100% { transform: scale(1); filter: drop-shadow(0 0 10px #00FFFF); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.getElementById('btn-finish').onclick = () => {
+            // Restaurar la visibilidad de la imagen para el siguiente nivel o cofre
+            if (imgTrivia) imgTrivia.style.display = 'block';
+            
+            modal.classList.add('hidden');
+            onComplete(gemasRecolectadas);
+        };
+    }
+   
+       if (assets.player.complete) mostrarMensajeInicio();
+       else assets.player.onload = mostrarMensajeInicio;
    }

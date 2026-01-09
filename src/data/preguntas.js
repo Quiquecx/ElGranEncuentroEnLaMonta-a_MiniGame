@@ -8,19 +8,19 @@ export const zona1Data = [
         id: 1, 
         img: 'src/imgs/sacramentos/L8-Sacramentos_05.png', 
         nombre: 'Bautismo', 
-        mensaje: '¡Splash! La vida nueva comienza con agua cristalina.' 
+        mensaje: '¡Splash! La vida nueva comienza con el signo del agua.' 
     },
     { 
         id: 2, 
         img: 'src/imgs/sacramentos/L8 Niños con armadura.png', 
         nombre: 'Confirmación', 
-        mensaje: 'Fortalece tu corazón con la fuerza del Espíritu.' 
+        mensaje: 'Fortalece tu corazón con la unción del Espíritu.' 
     },
     { 
         id: 3, 
         img: 'src/imgs/sacramentos/Reconciliacion.png', 
         nombre: 'Reconciliación', 
-        mensaje: 'Siente la alegría de un abrazo que todo lo sana.' 
+        mensaje: 'Siente la alegría del perdón.' 
     },
     { 
         id: 4, 
@@ -32,7 +32,7 @@ export const zona1Data = [
         id: 5, 
         img: 'src/imgs/sacramentos/L8Niños y sacerdote atendiendo anciano.png', 
         nombre: 'Unción de los enfermos', 
-        mensaje: 'Una caricia de Dios para dar fuerza en la debilidad.' 
+        mensaje: 'Una caricia de Dios para darnos consuelo y fortaleza.' 
     },
     { 
         id: 6, 

@@ -1,7 +1,7 @@
 /* ======================================================================
-   ZONA 3: LA CIMA DE LA MONTAÑA (Elige con tu Conciencia)
+   ZONA 3: LA CIMA DE LA MONTAÑA (Distribución Dinámica)
    ====================================================================== */
-   import { zona3Data, resultadosConciencia } from '../../data/preguntas.js';
+   import { zona3Data } from '../../data/preguntas.js';
    import { sonidos } from '../main.js'; 
    
    export function iniciarZona3(onComplete) {
@@ -14,7 +14,7 @@
        const gemDisplay = document.getElementById('gem-count');
    
        const VIEWPORT_WIDTH = 900;
-       const WORLD_WIDTH = 2600; 
+       const WORLD_WIDTH = 3000; // Aumentamos un poco el mundo para dar espacio
        const GROUND_Y = 450;
        
        let nivelActivo = false;
@@ -37,15 +37,22 @@
    
        let player = { 
            x: 100, y: GROUND_Y, w: 70, h: 90, 
-           speed: 5, vy: 0, gravity: 0.6, jumpPower: -14, 
+           speed: 6, vy: 0, gravity: 0.6, jumpPower: -14, 
            isJumping: false, facingRight: true 
        };
    
        const keys = {};
-   
+
+       // --- SOLUCIÓN A LA DISTRIBUCIÓN ---
+       // Calculamos el espacio disponible restando un margen inicial y final
+       const inicioX = 600;
+       const finX = WORLD_WIDTH - 400;
+       const espacioDisponible = finX - inicioX;
+       const intervalo = espacioDisponible / (zona3Data.length - 1 || 1);
+
        let cofres = zona3Data.map((data, i) => ({
            ...data,
-           x: 450 + (i * 200), 
+           x: inicioX + (i * intervalo), 
            y: 475,
            w: 60, h: 60,
            abierto: false
@@ -57,7 +64,7 @@
                player.vy = player.jumpPower; 
                player.isJumping = true;
                sonidos.salto.currentTime = 0;
-               sonidos.salto.play();
+               sonidos.salto.play().catch(()=>{});
            }
        };
        const handleKeyUp = (e) => keys[e.code] = false;
@@ -65,16 +72,17 @@
        window.addEventListener('keydown', handleKeyDown);
        window.addEventListener('keyup', handleKeyUp);
    
-       // --- MENSAJES INICIAL Y FINAL ---
        function mostrarMensajeInicio() {
            esperandoRespuesta = true;
+           nivelActivo = false;
            modal.classList.remove('hidden');
-           document.getElementById('timer-container').classList.add('hidden');
            imgElement.classList.add('hidden');
            
            titulo.innerText = "LA CIMA DE LA CONCIENCIA";
            container.innerHTML = `
-               <p style="color:white; margin-bottom:20px;">Estás en la cumbre. Aquí cada elección cuenta. Actúa según los mandamientos para alcanzar el tesoro final.</p>
+               <p style="color:white; margin-bottom:20px; text-align:center; font-family:'Avenir-Next', sans-serif;">
+                   Estás en la cumbre. Aquí cada elección cuenta. Actúa según los mandamientos para alcanzar el tesoro final.
+               </p>
                <button class="choice" id="btn-comenzar-z3" style="width: 200px; margin: 0 auto;">¡COMENZAR!</button>
            `;
            
@@ -89,25 +97,23 @@
        function abrirRetoConciencia(cofre) {
            esperandoRespuesta = true;
            sonidos.pasos.pause();
-           
-           // SONIDO: ABRIR COFRE
            sonidos.abrirCofre.currentTime = 0;
-           sonidos.abrirCofre.play();
+           sonidos.abrirCofre.play().catch(()=>{});
    
            Object.keys(keys).forEach(k => keys[k] = false); 
            
            modal.classList.remove('hidden');
-           document.getElementById('timer-container').classList.add('hidden');
-           
            imgElement.src = cofre.img;
+           imgElement.style.display = 'block';
+           imgElement.style.margin = '0 auto 15px auto';
            imgElement.classList.remove('hidden');
            
            container.innerHTML = '';
            titulo.innerText = `Mandamiento: ${cofre.mandamiento}`;
            
-           const instruccion = document.createElement('p');
-           instruccion.innerHTML = `<strong style="color:#FFD700">Situación:</strong> ${cofre.situacion}`;
-           instruccion.style.cssText = "color: white; margin-bottom: 20px; font-size: 15px; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 8px;";
+           const instruccion = document.createElement('div');
+           instruccion.innerHTML = `<strong style="color:#00FFFF">Situación:</strong><br>${cofre.situacion}`;
+           instruccion.style.cssText = "color: white; margin-bottom: 20px; font-size: 15px; padding: 15px; background: rgba(0,0,0,0.5); border-radius: 8px; text-align:center; font-family:'Avenir-Next', sans-serif;";
            container.appendChild(instruccion);
    
            cofre.opciones.forEach(opt => {
@@ -115,29 +121,27 @@
                btn.className = 'choice';
                btn.innerText = opt.texto;
                btn.onclick = () => {
-                   // Validación sonora según puntaje
-                   if (opt.pts >= 1) {
-                       sonidos.correcto.currentTime = 0;
-                       sonidos.correcto.play();
-                   } else {
-                       sonidos.incorrecto.currentTime = 0;
-                       sonidos.incorrecto.play();
-                   }
+                   container.innerHTML = ""; 
+   
+                   if (opt.pts >= 1) sonidos.correcto.play().catch(()=>{});
+                   else sonidos.error.play().catch(()=>{});
    
                    puntajeConcienciaTotal += opt.pts;
                    cofre.abierto = true;
                    retosCompletados++;
+
+                   // Actualizar HUD de gemas visualmente
+                   gemDisplay.innerText = parseInt(gemDisplay.innerText) + 1;
    
                    let icono = opt.pts === 2 ? "✅" : (opt.pts === 1 ? "🤔" : "❌");
                    titulo.innerText = `${icono} Obtuviste ${opt.pts} puntos`;
    
                    setTimeout(() => {
-                       modal.classList.add('hidden');
-                       esperandoRespuesta = false;
-                       gemDisplay.innerText = parseInt(gemDisplay.innerText) + 1;
-   
                        if (retosCompletados >= cofres.length) {
                            mostrarFinalConciencia();
+                       } else {
+                           modal.classList.add('hidden');
+                           esperandoRespuesta = false;
                        }
                    }, 1500);
                };
@@ -149,69 +153,36 @@
            nivelActivo = false;
            esperandoRespuesta = true;
            sonidos.pasos.pause();
-           sonidos.victoria.currentTime = 0;
-           sonidos.victoria.play();
+           sonidos.victoria.play().catch(()=>{});
    
+           imgElement.style.display = 'none';
            modal.classList.remove('hidden');
-           imgElement.classList.add('hidden');
-           container.innerHTML = '';
+           titulo.innerText = "¡NIVEL COMPLETADO!";
            
-           let resultado;
-           let colorPuntos;
-           let iconoGrande;
-   
-           if (puntajeConcienciaTotal >= 18) {
-               resultado = resultadosConciencia.brillante;
-               colorPuntos = "#FFD700";
-               iconoGrande = "🌟";
-           } else if (puntajeConcienciaTotal >= 12) {
-               resultado = resultadosConciencia.crecimiento;
-               colorPuntos = "#ADFF2F";
-               iconoGrande = "🌱";
-           } else {
-               resultado = resultadosConciencia.construccion;
-               colorPuntos = "#FFA500";
-               iconoGrande = "🧩";
-           }
-   
-           const card = document.createElement('div');
-           card.style.cssText = `background: rgba(20, 20, 50, 0.9); border: 3px solid ${colorPuntos}; border-radius: 20px; padding: 30px; text-align: center; box-shadow: 0 0 20px ${colorPuntos};`;
-   
-           titulo.innerText = "¡EXPEDICIÓN COMPLETADA!";
-           titulo.style.color = "#FFF";
-   
-           card.innerHTML = `
-               <div style="font-size: 60px; margin-bottom: 10px;">${iconoGrande}</div>
-               <h2 style="color: ${colorPuntos}; font-size: 28px; margin: 10px 0;">${puntajeConcienciaTotal} Puntos</h2>
-               <p style="color: #FFF; font-size: 16px; line-height: 1.6; margin: 20px 0;">"${resultado.msg}"</p>
+           container.innerHTML = `
+               <div style="text-align:center; margin-bottom:20px;">
+                   <div style="font-size: 80px; filter: drop-shadow(0 0 15px #00FFFF); animation: pulse 1.5s infinite;">💎</div>
+                   <p style="color:white; font-size:18px; margin-top:15px; font-weight:bold; font-family:'Avenir-Next', sans-serif;">
+                       ¡Has obtenido la Gema de la Montaña!
+                   </p>
+               </div>
+               <button class="choice" id="btn-final-z3">RECLAMAR Y VOLVER AL MAPA</button>
            `;
    
-           const btnFin = document.createElement('button');
-           btnFin.className = 'choice';
-           btnFin.innerText = "RECLAMAR TESORO FINAL";
-           btnFin.style.cssText = `margin-top: 15px; width: 250px; background: ${colorPuntos}; color: #000;`;
-           
-           btnFin.onclick = () => {
-               modal.classList.add('hidden');
+           document.getElementById('btn-final-z3').onclick = () => {
                finalizarNivel();
            };
-   
-           container.appendChild(card);
-           container.appendChild(btnFin);
        }
    
        function update() {
-           if (!nivelActivo || esperandoRespuesta) {
-               sonidos.pasos.pause();
-               return;
-           }
+           if (!nivelActivo || esperandoRespuesta) return;
    
            let moviendose = false;
            if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; player.facingRight = true; moviendose = true; }
            if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; player.facingRight = false; moviendose = true; }
            
            if (moviendose && !player.isJumping) {
-               if (sonidos.pasos.paused) sonidos.pasos.play();
+               if (sonidos.pasos.paused) sonidos.pasos.play().catch(()=>{});
            } else {
                sonidos.pasos.pause();
            }
@@ -224,8 +195,14 @@
            cameraX = Math.max(0, Math.min(WORLD_WIDTH - VIEWPORT_WIDTH, player.x - VIEWPORT_WIDTH / 2));
    
            cofres.forEach(cofre => {
-               if (!cofre.abierto && player.x < cofre.x + cofre.w && player.x + player.w > cofre.x && player.y < cofre.y + cofre.h && player.y + player.h > cofre.y) {
-                   abrirRetoConciencia(cofre);
+               if (!cofre.abierto) {
+                   const margen = 20; // Reducimos margen de colisión para mayor precisión
+                   const colH = player.x + player.w - margen > cofre.x && player.x + margen < cofre.x + cofre.w;
+                   const colV = player.y + player.h - margen > cofre.y && player.y + margen < cofre.y + cofre.h;
+                   
+                   if (colH && colV) {
+                       abrirRetoConciencia(cofre);
+                   }
                }
            });
        }
@@ -233,12 +210,14 @@
        function draw() {
            ctx.clearRect(0, 0, canvas.width, canvas.height);
            ctx.save();
-           ctx.translate(-cameraX, 0); 
+           ctx.translate(-Math.floor(cameraX), 0); 
            if (assets.fondo.complete) ctx.drawImage(assets.fondo, 0, 0, WORLD_WIDTH, canvas.height);
+           
            cofres.forEach(cofre => {
                let img = cofre.abierto ? assets.cofreAbierto : assets.cofreCerrado;
                if (img.complete) ctx.drawImage(img, cofre.x, cofre.y, cofre.w, cofre.h);
            });
+   
            if (assets.player.complete) {
                ctx.save();
                if (!player.facingRight) {
@@ -253,17 +232,20 @@
        }
    
        function loop() {
-           if (!nivelActivo && !esperandoRespuesta) return;
-           update(); draw();
-           requestID = requestAnimationFrame(loop);
+           if (nivelActivo || esperandoRespuesta) {
+               update(); 
+               draw();
+               requestID = requestAnimationFrame(loop);
+           }
        }
    
        function finalizarNivel() {
            cancelAnimationFrame(requestID);
            window.removeEventListener('keydown', handleKeyDown);
            window.removeEventListener('keyup', handleKeyUp);
+           modal.classList.add('hidden');
            onComplete(puntajeConcienciaTotal);
        }
    
-       mostrarMensajeInicio();
+       mostrarMensajeInicio(); 
    }
