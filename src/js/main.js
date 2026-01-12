@@ -1,5 +1,5 @@
 /* ======================================================================
-   EXPEDICIÓN A LA MONTAÑA SAGRADA - ARCHIVO PRINCIPAL (main.js)
+   EXPEDICIÓN A LA MONTAÑA SAGRADA - ARCHIVO PRINCIPAL
    ====================================================================== */
    import { iniciarZona1 } from './niveles/zona1.js';
    import { iniciarZona2 } from './niveles/zona2.js';
@@ -8,7 +8,11 @@
    const canvas = document.getElementById('map-canvas');
    const ctx = canvas.getContext('2d');
    
-   // --- SISTEMA DE SONIDOS ---
+   const BASE_WIDTH = 900;
+   const BASE_HEIGHT = 600;
+   canvas.width = BASE_WIDTH;
+   canvas.height = BASE_HEIGHT;
+   
    export const sonidos = {
        intro: new Audio('src/sonidos/intro.mp3'),
        pasos: new Audio('src/sonidos/adelante.mp3'),
@@ -23,35 +27,30 @@
    sonidos.intro.volume = 0.5;
    sonidos.pasos.loop = true;
    
-   const mapImg = new Image(); 
-   mapImg.src = 'src/imgs/fondos/fondo.png'; 
-   const playerImg = new Image(); 
-   playerImg.src = 'src/imgs/protagonistas/Niña 01.png';
+   const mapImg = new Image(); mapImg.src = 'src/imgs/fondos/fondo.png'; 
+   const playerImg = new Image(); playerImg.src = 'src/imgs/protagonistas/Niña 01.png';
    
-   // --- ESTADO GLOBAL ---
-   let player = { x: 450, y: 300, speed: 5, w: 60, h: 70 };
+   let player = { x: 450, y: 300, speed: 6, w: 60, h: 70 }; 
    let gameActive = false;
    let gamePaused = false; 
    let estaEnNivel = false; 
    let puntosTotales = 0;
    let zonasCompletadas = 0; 
    const keys = {};
-   let requestID = null;
    
    const PUNTOS_ENTRADA = {
-       zona1: { x: 458, y: 510, radio: 25, color: "rgba(255, 215, 0, 0.8)", id: 0 },
-       zona2: { x: 330, y: 283, radio: 25, color: "rgba(173, 255, 47, 0.8)", id: 1 },
-       zona3: { x: 560, y: 80, radio: 25, color: "rgba(0, 255, 255, 0.8)", id: 2 },
-       tesoro: { x: 680, y: 60, radio: 30, color: "rgba(255, 69, 0, 0.9)", id: 3 }
+       zona1: { x: 458, y: 510, radio: 25, color: "rgba(255, 215, 0, 0.8)" },
+       zona2: { x: 330, y: 283, radio: 25, color: "rgba(173, 255, 47, 0.8)" },
+       zona3: { x: 560, y: 80, radio: 25, color: "rgba(0, 255, 255, 0.8)" },
+       tesoro: { x: 680, y: 60, radio: 30, color: "rgba(255, 69, 0, 0.9)" }
    };
    
-   // --- ADAPTACIÓN DE PANTALLA (RESPONSIVE) ---
+   /* --- CONTROL DE ESCALA ADAPTABLE --- */
    function resizeGame() {
        const width = window.innerWidth;
        const height = window.innerHeight;
-       const baseWidth = 900;
-       const baseHeight = 600;
-       const scale = Math.min(width / baseWidth, height / baseHeight);
+       // El '1' al final de Math.min bloquea que el juego crezca más de 900x600
+       const scale = Math.min(width / BASE_WIDTH, height / BASE_HEIGHT, 1);
        document.documentElement.style.setProperty('--game-scale', scale * 0.98);
    }
    
@@ -59,89 +58,58 @@
    window.addEventListener('load', resizeGame);
    resizeGame();
    
-   // --- CONTROLES ---
    window.addEventListener('keydown', e => { if(!gamePaused) keys[e.code] = true; });
    window.addEventListener('keyup', e => keys[e.code] = false);
    
    function vincularControlesTactiles() {
-       const btnLeft = document.getElementById('btn-left');
-       const btnRight = document.getElementById('btn-right');
-       const btnJump = document.getElementById('btn-jump');
-   
-       if (btnLeft) {
-           btnLeft.onpointerdown = (e) => { e.preventDefault(); if(!gamePaused) keys['ArrowLeft'] = true; };
-           btnLeft.onpointerup = (e) => { e.preventDefault(); keys['ArrowLeft'] = false; };
-       }
-       if (btnRight) {
-           btnRight.onpointerdown = (e) => { e.preventDefault(); if(!gamePaused) keys['ArrowRight'] = true; };
-           btnRight.onpointerup = (e) => { e.preventDefault(); keys['ArrowRight'] = false; };
-       }
-       if (btnJump) {
-           btnJump.onpointerdown = (e) => { e.preventDefault(); if(!gamePaused) keys['ArrowUp'] = true; };
-           btnJump.onpointerup = (e) => { e.preventDefault(); keys['ArrowUp'] = false; };
-       }
-   }
-   
-   function mostrarAviso(texto) {
-       const avisoExistente = document.querySelector('.aviso-game');
-       if (avisoExistente) avisoExistente.remove();
-       const aviso = document.createElement('div');
-       aviso.className = 'aviso-game';
-       aviso.style.cssText = `position:fixed; top:20%; left:50%; transform:translateX(-50%); background:rgba(255,0,0,0.8); color:white; padding:10px 20px; border-radius:5px; font-family: sans-serif; font-size:12px; z-index:10000; text-align:center; box-shadow: 0 0 10px black;`;
-       aviso.innerText = texto;
-       document.body.appendChild(aviso);
-       sonidos.error.play().catch(()=>{});
-       setTimeout(() => aviso.remove(), 2000);
+       const mapping = {
+           'btn-left': 'ArrowLeft', 'btn-right': 'ArrowRight',
+           'btn-down': 'ArrowDown', 'btn-jump': 'ArrowUp'
+       };
+       Object.entries(mapping).forEach(([id, key]) => {
+           const btn = document.getElementById(id);
+           if (btn) {
+               btn.onpointerdown = (e) => { e.preventDefault(); if(!gamePaused) keys[key] = true; };
+               btn.onpointerup = (e) => { e.preventDefault(); keys[key] = false; };
+               btn.onpointerleave = (e) => { e.preventDefault(); keys[key] = false; };
+           }
+       });
    }
    
    function initUI() {
        const btnStart = document.getElementById('start-game');
-       const btnPause = document.getElementById('btn-pause');
-       
-       // CORRECCIÓN DE IDs PARA QUE COINCIDAN CON TU HTML
-       const btnHowTo = document.getElementById('how-to'); 
+       const btnHowTo = document.getElementById('how-to');
        const btnCloseHowTo = document.getElementById('close-howto');
        const screenHowTo = document.getElementById('howto-screen');
-       const menu = document.getElementById('menu');
+       const btnPause = document.getElementById('btn-pause');
    
        vincularControlesTactiles();
    
        if(btnStart) {
            btnStart.onclick = () => {
-               menu.classList.add('hidden');
+               document.getElementById('menu').classList.add('hidden');
                document.getElementById('map-screen').classList.remove('hidden');
                document.getElementById('mobile-controls').classList.remove('hidden');
-               btnPause.classList.remove('hidden'); 
+               if(btnPause) btnPause.classList.remove('hidden'); 
                sonidos.intro.play().catch(() => {});
                gameActive = true;
                gameLoop();
            };
        }
    
-       // Lógica para mostrar "Cómo jugar"
-       if(btnHowTo) {
-           btnHowTo.onclick = () => {
-               screenHowTo.classList.remove('hidden');
-           };
-       }
-   
-       // Lógica para cerrar "Cómo jugar"
-       if(btnCloseHowTo) {
-           btnCloseHowTo.onclick = () => {
-               screenHowTo.classList.add('hidden');
-           };
-       }
+       if(btnHowTo) btnHowTo.onclick = () => screenHowTo.classList.remove('hidden');
+       if(btnCloseHowTo) btnCloseHowTo.onclick = () => screenHowTo.classList.add('hidden');
    
        if(btnPause) {
            btnPause.onclick = () => {
                gamePaused = !gamePaused;
                if (gamePaused) {
-                   btnPause.innerText = "REANUDAR";
+                   btnPause.innerText = "▶️ REANUDAR";
                    sonidos.intro.pause();
                    sonidos.pasos.pause();
                    Object.keys(keys).forEach(k => keys[k] = false);
                } else {
-                   btnPause.innerText = "PAUSA";
+                   btnPause.innerText = "⏸️ PAUSA";
                    if(!estaEnNivel) sonidos.intro.play().catch(() => {});
                }
            };
@@ -149,11 +117,14 @@
    }
    
    function gameLoop() {
-       if (gameActive && !estaEnNivel) {
+       // Verificamos si hay algún modal abierto para pausar el movimiento
+       const isModalOpen = !document.getElementById('howto-screen').classList.contains('hidden');
+       
+       if (gameActive && !estaEnNivel && !isModalOpen) {
            if (!gamePaused) update();
            draw();
        }
-       requestID = requestAnimationFrame(gameLoop);
+       requestAnimationFrame(gameLoop);
    }
    
    function update() {
@@ -169,8 +140,8 @@
            sonidos.pasos.pause();
        }
    
-       player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
-       player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
+       player.x = Math.max(20, Math.min(BASE_WIDTH - 20, player.x));
+       player.y = Math.max(20, Math.min(BASE_HEIGHT - 20, player.y));
        verificarEntradaNivel();
    }
    
@@ -184,19 +155,26 @@
    
        if (d1 < PUNTOS_ENTRADA.zona1.radio) {
            if (zonasCompletadas === 0) entrarANivel(iniciarZona1);
-           else mostrarAviso("YA COMPLETADO");
+           else if (zonasCompletadas > 0) mostrarAvisoBloqueo("¡Esta gema ya la tienes!");
        } 
        else if (d2 < PUNTOS_ENTRADA.zona2.radio) {
            if (zonasCompletadas === 1) entrarANivel(iniciarZona2);
-           else if (zonasCompletadas < 1) mostrarAviso("BLOQUEADO: Supera la Zona 1");
+           else if (zonasCompletadas < 1) mostrarAvisoBloqueo("¡Bloqueado! Ve a la Zona 1");
        } 
        else if (d3 < PUNTOS_ENTRADA.zona3.radio) {
            if (zonasCompletadas === 2) entrarANivel(iniciarZona3);
-           else if (zonasCompletadas < 2) mostrarAviso("BLOQUEADO: Supera la Zona 2");
+           else if (zonasCompletadas < 2) mostrarAvisoBloqueo("¡Bloqueado! Completa la Zona 2");
        } 
        else if (dT < PUNTOS_ENTRADA.tesoro.radio) {
            if (zonasCompletadas >= 3) mostrarCofreFinal();
-           else mostrarAviso("BLOQUEADO: Reúne las 3 gemas");
+           else mostrarAvisoBloqueo("¡Reúne las 3 gemas primero!");
+       }
+   }
+   
+   function mostrarAvisoBloqueo(msj) {
+       if (sonidos.error.paused) {
+           sonidos.error.play().catch(()=>{});
+           console.log(msj);
        }
    }
    
@@ -212,35 +190,25 @@
        estaEnNivel = false;
        puntosTotales += puntosObtenidos;
        zonasCompletadas++; 
-       vincularControlesTactiles();
-       document.getElementById('mobile-controls').classList.remove('hidden');
-       const displayPuntos = document.getElementById('gem-count');
-       if(displayPuntos) displayPuntos.innerText = puntosTotales;
-       document.getElementById('map-screen').classList.remove('hidden');
+       document.getElementById('gem-count').innerText = puntosTotales;
        sonidos.victoria.play().catch(()=>{});
        setTimeout(() => { if(!estaEnNivel && !gamePaused) sonidos.intro.play().catch(()=>{}); }, 1000);
-       player.x += 40; 
-       player.y += 40;
+       player.x += 40; player.y += 40;
    }
    
    function draw() {
-       ctx.clearRect(0, 0, canvas.width, canvas.height);
-       if (mapImg.complete) ctx.drawImage(mapImg, 0, 0, canvas.width, canvas.height);
+       ctx.clearRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+       if (mapImg.complete) ctx.drawImage(mapImg, 0, 0, BASE_WIDTH, BASE_HEIGHT);
        
        function dibujarIndicador(punto, emoji, estado) {
            ctx.save();
-           ctx.shadowBlur = (estado === 1) ? 20 : 5;
-           ctx.shadowColor = (estado === 0) ? "gray" : (estado === 2) ? "white" : punto.color;
-           ctx.font = "40px Arial";
+           ctx.shadowBlur = 15;
+           ctx.shadowColor = (estado === 1) ? punto.color : (estado === 2 ? "lime" : "gray");
+           ctx.font = "35px Arial";
            ctx.textAlign = "center";
            ctx.textBaseline = "middle";
-           if (estado === 0) ctx.fillText("🔒", punto.x, punto.y);
-           else if (estado === 2) {
-               ctx.globalAlpha = 0.5;
-               ctx.fillText("✅", punto.x, punto.y);
-           } else {
-               ctx.fillText(emoji, punto.x, punto.y);
-           }
+           let icono = (estado === 1) ? emoji : (estado === 2 ? "✅" : "🔒");
+           ctx.fillText(icono, punto.x, punto.y);
            ctx.restore();
        }
    
@@ -252,37 +220,39 @@
        if (playerImg.complete) {
            ctx.drawImage(playerImg, player.x - (player.w/2), player.y - (player.h/2), player.w, player.h);
        }
-   
-       if (gamePaused) {
-           ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-           ctx.fillRect(0, 0, canvas.width, canvas.height);
-           ctx.fillStyle = "white";
-           ctx.font = "30px sans-serif";
-           ctx.textAlign = "center";
-           ctx.fillText("JUEGO EN PAUSA", canvas.width/2, canvas.height/2);
-       }
    }
    
    function mostrarCofreFinal() {
        estaEnNivel = true;
        sonidos.pasos.pause();
        sonidos.intro.pause();
-       sonidos.abrirCofre.play().catch(()=>{});
+       sonidos.abrirCofre.play().catch(() => {});
+       
        const finalScreen = document.getElementById('final-treasure-screen');
-       const chest = document.getElementById('treasure-chest-anim');
+       const rewardImg = document.getElementById('treasure-chest-anim');
+       
+       let rango = (puntosTotales >= 30) ? "¡CONCIENCIA BRILLANTE! 🌟" : 
+                   (puntosTotales >= 15) ? "CONCIENCIA EN CRECIMIENTO 🌱" : "CONCIENCIA EN CONSTRUCCIÓN 🧩";
+   
        finalScreen.classList.remove('hidden');
    
        setTimeout(() => {
-           chest.classList.replace('chest-closed', 'chest-open');
-           sonidos.victoria.play().catch(()=>{});
-           let mensaje, color;
-           if (puntosTotales >= 15) { mensaje = "🌟 ¡CONCIENCIA BRILLANTE!"; color = "#FFD700"; }
-           else if (puntosTotales >= 7) { mensaje = "🌱 CONCIENCIA EN CRECIMIENTO"; color = "#ADFF2F"; }
-           else { mensaje = "🧩 CONCIENCIA EN CONSTRUCCIÓN"; color = "#FFA500"; }
-           document.getElementById('final-rank-text').innerText = mensaje;
-           document.getElementById('final-rank-text').style.color = color;
-           document.getElementById('stats-summary').innerHTML = `Has reunido <strong>${puntosTotales} gemas</strong>.<br><br>¡El tesoro es tu encuentro con Dios!`;
-       }, 1200);
+           rewardImg.innerHTML = `
+               <img src="src/imgs/general/L8-Montaña-y-niños H (002).png" 
+                    alt="Encuentro en la Montaña" 
+                    style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 15px white); transform: scale(1.1); animation: bounceIn 0.8s ease;">
+           `;
+           rewardImg.classList.add('chest-open');
+           sonidos.victoria.play().catch(() => {});
+   
+           document.getElementById('final-rank-text').innerText = rango;
+           document.getElementById('stats-summary').innerHTML = `
+               <div style="margin-top: 10px; line-height: 1.5; color: white;">
+                   Has reunido <span style="font-weight:bold; color:var(--accent-gold);">${puntosTotales} puntos de fe</span>.<br>
+                   ¡Felicidades! Has tenido un encuentro con Dios en la montaña.
+               </div>
+           `;
+       }, 1000);
    
        document.getElementById('btn-restart').onclick = () => location.reload();
    }

@@ -14,7 +14,8 @@
 }
 
 :root {
-    --primary-purple: #702283;   
+    --primary-purple: #7b4397;   /* Morado de la portada */
+    --book-green: #58b347;       /* Verde del título de la portada */
     --accent-orange: #e84e0f;    
     --success-green: #2ecc71;    
     --wrong-red: #e74c3c;        
@@ -22,12 +23,11 @@
     --accent-gold: #ffd166;      
     --font-titles: 'KG-Happy', sans-serif;
     --font-body: 'Avenir-Next', sans-serif;
-    /* Variable para controlar el reescalado dinámico */
     --game-scale: 1;
 }
 
 /* ======================================================================
-   1. CONFIGURACIÓN BASE Y CONTENEDOR (SISTEMA DE ESCALA)
+   1. CONFIGURACIÓN BASE Y CONTENEDOR (RESOLUCIÓN FIJA)
    ====================================================================== */
 * { 
     box-sizing: border-box; 
@@ -38,32 +38,29 @@
 html, body {
     height: 100%;
     width: 100%;
-    background: radial-gradient(circle at center, #2d0e35 0%, #0b0b1a 100%);
+    background: radial-gradient(circle at center, #3d1b4d 0%, #0b0b1a 100%);
     color: #edf2f7;
     font-family: var(--font-body); 
     overflow: hidden; 
     display: flex;
     align-items: center;
     justify-content: center;
-    touch-action: none; /* Evita zoom accidental en móviles */
+    touch-action: none;
 }
 
 #game-container {
-    /* Tamaño fijo de referencia */
     width: 900px; 
     height: 600px;
+    aspect-ratio: 900 / 600; /* Asegura la proporción correcta */
     position: relative; 
-    
-    /* El truco de la escala: mantiene la proporción sin estirar */
     transform: scale(var(--game-scale));
     transform-origin: center;
-
-    border: 5px solid var(--accent-gold); 
+    border: 5px solid white; 
     border-radius: 20px;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
     background-color: var(--bg);
     overflow: hidden;
-    flex-shrink: 0; /* Evita que flex lo deforme */
+    flex-shrink: 0;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -77,10 +74,11 @@ canvas {
     position: absolute;
     top: 0; left: 0;
     z-index: 1;
+    object-fit: contain; /* Evita que el contenido del canvas se estire */
 }
 
 /* ======================================================================
-   2. PANTALLAS Y TIPOGRAFÍA
+   2. PANTALLAS (ESTILO PORTADA DE LIBRO)
    ====================================================================== */
 .screen {
     position: absolute;
@@ -88,31 +86,50 @@ canvas {
     width: 100%; height: 100%;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    background: radial-gradient(circle, #2d0e35 0%, #0b1220 100%);
     z-index: 100;
     text-align: center;
     padding: 40px;
 }
 
+#menu.screen {
+    background: var(--primary-purple);
+    background: radial-gradient(circle, #b985d1 0%, #7b4397 100%);
+}
+
 #map-screen { 
     background: transparent; 
     z-index: 10; 
-    pointer-events: none; 
 }
 
+/* Título estilo Portada (Verde con borde blanco) */
 h1.main-title {
     font-family: var(--font-titles);
-    color: var(--accent-gold);
-    font-size: 3rem;
+    color: var(--book-green);
+    font-size: 4.5rem;
+    line-height: 0.85;
     margin-bottom: 5px;
-    text-shadow: 4px 4px 0px rgba(0,0,0,0.4);
+    text-transform: uppercase;
+    /* Efecto Sticker Blanco */
+    filter: drop-shadow(4px 4px 0px white) 
+            drop-shadow(-4px -4px 0px white)
+            drop-shadow(4px -4px 0px white)
+            drop-shadow(-4px 4px 0px white);
 }
 
 .sub-title {
     font-family: var(--font-titles);
-    color: #00FFFF;
-    font-size: 1.5rem;
-    margin-bottom: 20px;
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 25px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+}
+
+.intro-text {
+    font-family: var(--font-body);
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
 }
 
 /* ======================================================================
@@ -120,7 +137,7 @@ h1.main-title {
    ====================================================================== */
 button {
     cursor: pointer;
-    border: none;
+    border: 3px solid white;
     padding: 15px 40px;
     font-family: var(--font-titles);
     font-size: 1.1rem;
@@ -133,13 +150,13 @@ button {
 }
 
 .btn-primary { 
-    background: linear-gradient(180deg, #2ecc71, #27ae60); 
-    box-shadow: 0 6px 0 #1b7a43; 
+    background: var(--book-green); 
+    box-shadow: 0 6px 0 #3d7d31; 
 }
 
 .btn-secondary, .choice { 
-    background: linear-gradient(180deg, var(--accent-orange), #a0360b); 
-    box-shadow: 0 6px 0 #7a2908; 
+    background: #f39200; /* Naranja del escudo '5 Primaria' */
+    box-shadow: 0 6px 0 #b36b00; 
 }
 
 button:hover { 
@@ -148,31 +165,55 @@ button:hover {
 }
 
 /* ======================================================================
-   4. CONTROLES TÁCTILES
+   4. CONTROLES TÁCTILES UNIVERSALES
    ====================================================================== */
 #mobile-controls {
     position: absolute;
-    bottom: 30px; left: 0; width: 100%;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
     padding: 0 40px;
-    display: flex; justify-content: space-between;
-    pointer-events: none; z-index: 2000;
+    z-index: 99999;
+    pointer-events: none; 
 }
 
-.controls-left, .controls-right { display: flex; gap: 20px; pointer-events: auto; }
+#mobile-controls:not(.hidden) {
+    display: flex !important;
+}
+
+.controls-left, .controls-right {
+    pointer-events: auto;
+}
+
+.d-pad {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
 
 .touch-btn {
-    width: 75px; height: 75px;
-    background: rgba(255, 255, 255, 0.1); 
-    backdrop-filter: blur(10px);
-    border: 3px solid var(--accent-gold);
+    width: 65px;
+    height: 65px;
+    background: rgba(255, 255, 255, 0.4);
+    border: 3px solid white;
     border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px; color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
     cursor: pointer;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    user-select: none;
+    touch-action: manipulation;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-.touch-btn:active { background: var(--accent-orange); transform: translateY(4px); }
+.touch-btn:active {
+    background: var(--accent-gold);
+    transform: scale(0.9);
+}
 
 /* ======================================================================
    5. MODALES Y HUD
@@ -181,13 +222,19 @@ button:hover {
     background: #ffffff;
     padding: 30px;
     border-radius: 30px;
-    border: 6px solid var(--accent-gold);
+    border: 6px solid var(--book-green);
     width: 90%;
     max-width: 550px;
     color: #333;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     animation: openModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     pointer-events: auto;
+}
+
+.modal-header {
+    font-family: var(--font-titles);
+    color: var(--primary-purple);
+    margin-bottom: 15px;
 }
 
 #hud {
@@ -202,14 +249,11 @@ button:hover {
     background: rgba(0,0,0,0.7);
     padding: 10px 20px;
     border-radius: 30px;
-    border: 2px solid var(--accent-gold);
+    border: 2px solid white;
     font-family: var(--font-titles);
-    font-size: 1.2rem; color: var(--accent-gold);
+    font-size: 1.2rem; color: white;
 }
 
-/* ======================================================================
-   6. DERECHOS RESERVADOS Y EFECTOS
-   ====================================================================== */
 .copyright-notice {
     position: absolute;
     bottom: 15px;
@@ -217,25 +261,63 @@ button:hover {
     text-align: center;
     font-family: var(--font-body);
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.6);
 }
 
+/* Contenedor de la imagen final */
 #treasure-chest-anim {
-    width: 160px; height: 160px;
-    margin: 0 auto 15px auto;
+    width: 400px;        /* Un poco más grande para impacto visual */
+    height: 280px;
+    margin: 20px auto;
+    display: flex;       /* Cambiado a flex para centrar la img inyectada */
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: 20px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.chest-closed { background-image: url('src/imgs/general/L8 Cofre cerrado.png'); }
+/* Efecto de resplandor de fondo (Aura divina) */
+#treasure-chest-anim::before {
+    content: '';
+    position: absolute;
+    width: 70%;
+    height: 70%;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+/* Estilo cuando la imagen se activa */
 .chest-open {
-    background-image: url('src/imgs/general/L8 Cofre abierto.png') !important;
-    filter: drop-shadow(0 0 20px #FFD700);
-    transform: scale(1.1);
+    opacity: 1 !important;
+    transform: scale(1.15); /* Efecto de acercamiento */
+    filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.8));
 }
 
-@keyframes openModal {
-    from { transform: scale(0.5); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+/* Activamos el aura cuando se abre */
+.chest-open::before {
+    opacity: 1;
+    animation: pulseGlow 2s infinite alternate;
+}
+
+/* Animación de pulso para el brillo */
+@keyframes pulseGlow {
+    from { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    to { transform: translate(-50%, -50%) scale(1.4); opacity: 0.8; }
+}
+
+/* Estilo para la imagen inyectada por JS */
+#treasure-chest-anim img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 15px; /* Suaviza las esquinas de la foto */
 }

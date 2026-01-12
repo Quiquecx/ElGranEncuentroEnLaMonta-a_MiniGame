@@ -164,7 +164,7 @@ export const zona3Data = [
         situacion: "El domingo hay misa y un partido de fútbol.",
         opciones: [
             { texto: "Vas a misa.", pts: 2 },
-            { texto: "Cumples con misa y luego juegas.", pts: 1 },
+            { texto: "Cumples con misa y después vas al partido.", pts: 1 },
             { texto: "Vas al partido.", pts: 0 }
         ]
     },
@@ -175,7 +175,7 @@ export const zona3Data = [
         situacion: "Tu mamá te pide ayuda para poner la mesa.",
         opciones: [
             { texto: "Ayudas de inmediato.", pts: 2 },
-            { texto: "Terminas el capítulo y luego ayudas.", pts: 1 },
+            { texto: "Terminas de ver TV y después ayudas.", pts: 1 },
             { texto: "Ignoras y sigues viendo tele.", pts: 0 }
         ]
     },
@@ -196,7 +196,7 @@ export const zona3Data = [
         mandamiento: "No cometerás actos impuros",
         situacion: "Un amigo te quiere mostrar imágenes inapropiadas.",
         opciones: [
-            { texto: "Dices que no y cierras.", pts: 2 },
+            { texto: "Dices que no y te alejas.", pts: 2 },
             { texto: "Le explicas que no son buenas.", pts: 1 },
             { texto: "Las ves por curiosidad.", pts: 0 }
         ]
@@ -241,7 +241,7 @@ export const zona3Data = [
         situacion: "Tu amigo tiene un videojuego o celular nuevo.",
         opciones: [
             { texto: "Lo felicitas y juegas con él.", pts: 2 },
-            { texto: "Pides uno, pero aceptas esperar.", pts: 1 },
+            { texto: "Pides uno, y aceptas las condiciones.", pts: 1 },
             { texto: "Reclamas y te molestas.", pts: 0 }
         ]
     }

@@ -12,15 +12,20 @@
     <div id="game-container">
         
         <div id="menu" class="screen">
-            <h1 class="main-title">El Gran Encuentro</h1>
-            <h2 class="sub-title">En la Montaña Sagrada</h2>
-            <p class="intro-text">¡Encuentra el tesoro del encuentro con Dios!</p>
+            <div class="header-container">
+                <h1 class="main-title">EL GRAN <br> <span>ENCUENTRO</span></h1>
+                <h2 class="sub-title">en la montaña</h2>
+            </div>
+            
+            <p class="intro-text">Celebramos, oramos y vivimos nuestra fe</p>
             
             <div class="menu-buttons">
                 <button id="start-game" class="btn-primary">Iniciar Expedición</button>
                 <button id="how-to" class="btn-secondary">Cómo Jugar</button>
             </div>
-
+        
+            <div class="character-decor"></div>
+        
             <footer class="copyright-notice">
                 © Todos los derechos reservados Librerías y Ediciones Casa del Catequista
             </footer>
@@ -48,10 +53,13 @@
                 <div id="gem-count-display">💎 <span id="gem-count">0</span></div>
             </div>
 
-            <div id="mobile-controls">
+            <div id="mobile-controls" class="hidden">
                 <div class="controls-left">
-                    <div id="btn-left" class="touch-btn">⬅️</div>
-                    <div id="btn-right" class="touch-btn">➡️</div>
+                    <div class="d-pad">
+                        <div id="btn-left" class="touch-btn">⬅️</div>
+                        <div id="btn-down" class="touch-btn">⬇️</div>
+                        <div id="btn-right" class="touch-btn">➡️</div>
+                    </div>
                 </div>
                 <div class="controls-right">
                     <div id="btn-jump" class="touch-btn">▲</div>
@@ -69,9 +77,11 @@
         </div>
 
         <div id="final-treasure-screen" class="screen hidden">
-            <div class="modal-content transparent">
-                <h1 id="final-title">¡EL TESORO DE LA MONTAÑA!</h1>
-                <div id="treasure-chest-anim" class="chest-closed"></div>
+            <div class="modal-content transparent" style="background: rgba(0,0,0,0.8); border:none;">
+                <h1 id="final-title" style="color: white; font-family: var(--font-titles);">¡EL TESORO DE LA MONTAÑA!</h1>
+                
+                <div id="treasure-chest-anim"></div>
+                
                 <div id="final-message-container">
                     <p id="final-rank-text"></p>
                     <div id="stats-summary"></div>
