@@ -228,13 +228,14 @@
            esperandoRespuesta = true;
            modal.classList.remove('hidden');
            titulo.innerText = "EL VALLE DEL DESCUBRIMIENTO";
+           titulo.style.color = "var(--primary-purple)";
            container.innerHTML = `
                <div style="text-align:center;">
                    <p style="color:#333; font-weight: bold; margin-bottom:20px;">
                        Sube a las plataformas para alcanzar los cofres sagrados. 
                        ¡Descubre los 7 Sacramentos!
                    </p>
-                   <button class="choice" id="btn-start">¡EMPEZAR!</button>
+                   <button class="choice" id="btn-start">¡COMENZAR!</button>
                </div>
            `;
            document.getElementById('btn-start').onclick = () => {
@@ -245,31 +246,57 @@
        }
    
        function finalizarNivel() {
-           nivelActivo = false;
-           limpiarListeners();
-           cancelAnimationFrame(requestID);
-           sonidos.pasos.pause();
-           sonidos.victoria.play().catch(()=>{});
-   
-           if (imgEl) imgEl.style.display = 'none';
-           modal.classList.remove('hidden');
-           titulo.innerText = "¡NIVEL COMPLETADO!";
-           
-           // Mensaje final sin color azul (Cyan)
-           container.innerHTML = `
-               <div style="text-align:center; padding: 10px;">
-                   <div style="font-size: 80px; filter: drop-shadow(0 0 15px gold); animation: bounce 2s infinite;">💎</div>
-                   <p style="color:#333; font-size:20px; margin-top:15px; font-weight:bold;">¡Gema obtenida!</p>
-                   <p style="color:var(--book-green); font-size:16px; margin-top:5px; font-weight: bold;">¡Has obtenido la Gema del sendero del Espíritu!</p>
-               </div>
-               <button class="choice" id="btn-finish" style="width:100%; margin-top:20px;">VOLVER AL MAPA</button>
-           `;
-   
-           document.getElementById('btn-finish').onclick = () => {
-               modal.classList.add('hidden');
-               onComplete(gemasRecolectadas);
-           };
-       }
+        nivelActivo = false;
+        limpiarListeners();
+        cancelAnimationFrame(requestID);
+        
+        // Pausar sonidos de pasos y tocar victoria
+        sonidos.pasos.pause();
+        sonidos.victoria.play().catch(() => {});
+    
+        // 1. Limpiar imagen previa
+        if (imgEl) {
+            imgEl.classList.add('hidden');
+            imgEl.style.display = 'none';
+        }
+    
+        // 2. Preparar modal
+        modal.style.zIndex = "5000"; 
+        modal.classList.remove('hidden');
+    
+        // 3. Título consistente
+        titulo.innerText = "¡NIVEL COMPLETADO!";
+    
+        // 4. Inyectar contenido idéntico al estilo de la Zona 2
+        container.innerHTML = `
+            <div style="text-align:center; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px #ffd166); animation: bounce 2s infinite;">💎</div>
+                
+                <p style="color:#333; font-size: 20px; font-weight: bold; margin: 10px 0; font-family: var(--font-body);">
+                    ¡Has obtenido la Gema del Valle!
+                </p>
+                
+                <p style="color:#555; font-size: 16px; margin-bottom: 15px; font-style: italic; font-family: var(--font-body);">
+                    "Los 7 sacramentos han sido revelados."
+                </p>
+    
+                <div style="background: #f0f0f0; padding: 10px 30px; border-radius: 50px; border: 2px solid #ffd166; margin-bottom: 20px;">
+                    <span style="color:#333; font-family: var(--font-titles); font-size: 22px;">
+                        Puntos: ${gemasRecolectadas}
+                    </span>
+                </div>
+    
+                <button class="choice" id="btn-finish" style="width: 100%; max-width: 250px; cursor: pointer; pointer-events: auto;">
+                    VOLVER AL MAPA
+                </button>
+            </div>
+        `;
+    
+        document.getElementById('btn-finish').onclick = () => {
+            modal.classList.add('hidden');
+            onComplete(gemasRecolectadas);
+        };
+    }
    
        if (assets.player.complete) mostrarMensajeInicio();
        else assets.player.onload = mostrarMensajeInicio;

@@ -327,7 +327,7 @@
                 Ordena los mensajes y resuelve los dilemas para llegar a la cima.
             </p>
             <button class="choice" id="btn-start-z2" style="padding:15px 40px; font-size:1.2rem;">
-                ¡EMPEZAR!
+                ¡COMENZAR!
             </button>
         </div>
     `;

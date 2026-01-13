@@ -70,24 +70,36 @@
        window.addEventListener('keyup', handleKeyUp);
    
        function mostrarMensajeInicio() {
-           esperandoRespuesta = true;
-           nivelActivo = false;
-           modal.classList.remove('hidden');
-           imgElement.classList.add('hidden');
-           titulo.innerText = "LA CIMA DE LA CONCIENCIA";
-           container.innerHTML = `
-               <p style="color:white; margin-bottom:20px; text-align:center;">
-                   Estás en la cumbre. Aquí cada elección cuenta. Actúa según los mandamientos para alcanzar el tesoro final.
-               </p>
-               <button class="choice" id="btn-comenzar-z3" style="width: 200px; margin: 0 auto;">¡COMENZAR!</button>
-           `;
-           document.getElementById('btn-comenzar-z3').onclick = () => {
-               modal.classList.add('hidden');
-               esperandoRespuesta = false;
-               nivelActivo = true;
-               loop();
-           };
-       }
+        esperandoRespuesta = true;
+        nivelActivo = false;
+        modal.classList.remove('hidden');
+        
+        // IMPORTANTE: Aseguramos que la imagen no estorbe
+        imgElement.style.display = 'none'; 
+        imgElement.classList.add('hidden');
+        
+        titulo.innerText = "LA CIMA DE LA CONCIENCIA";
+        
+        // Envolvemos todo en un div para que el CSS de 'options-container' no rompa el texto
+        container.innerHTML = `
+            <div style="width: 100%; padding: 10px;">
+                <p style="color: #333 !important; margin-bottom: 25px; text-align: center; font-family: var(--font-body); font-size: 1.1rem; line-height: 1.4;">
+                    Estás en la cumbre. Aquí cada elección cuenta.<br>
+                    Actúa según los mandamientos para alcanzar el tesoro final.
+                </p>
+                <div style="display: flex; justify-content: center; width: 100%;">
+                    <button class="choice" id="btn-comenzar-z3" style="width: 220px;">¡COMENZAR!</button>
+                </div>
+            </div>
+        `;
+    
+        document.getElementById('btn-comenzar-z3').onclick = () => {
+            modal.classList.add('hidden');
+            esperandoRespuesta = false;
+            nivelActivo = true;
+            loop();
+        };
+    }
    
        function abrirRetoConciencia(cofre) {
            esperandoRespuesta = true;
@@ -147,40 +159,59 @@
        }
    
        function mostrarFinalConciencia() {
-           nivelActivo = false;
-           esperandoRespuesta = true;
-           sonidos.pasos.pause();
-           sonidos.victoria.play().catch(()=>{});
-   
-           imgElement.style.display = 'none';
-           modal.classList.remove('hidden');
-           titulo.innerText = "¡CUMBRE ALCANZADA!";
-           
-           let rango = "";
-           if (puntajeConcienciaTotal >= 18) { rango = "Conciencia Brillante 🌟"; }
-           else if (puntajeConcienciaTotal >= 12) { rango = "Conciencia en Crecimiento 🌱"; }
-           else { rango = "Conciencia en Construcción 🧩"; }
-   
-           container.innerHTML = `
-               <div style="text-align:center; margin-bottom:20px;">
-                   <div style="font-size: 80px; filter: drop-shadow(0 0 15px #00FFFF);">💎</div>
-                   <p style="color:white; font-size:22px; margin-top:15px; font-weight:bold;">
-                       Has obtenido la Gema de la Cumbre
-                   </p>
-                   <p style="color:#2ecc71; font-size:20px; margin-top:10px;">
-                       Nivel: ${rango}
-                   </p>
-                   <p style="color:white; font-size:16px; margin-top:5px;">
-                       Puntos acumulados en esta zona: ${puntajeConcienciaTotal}
-                   </p>
-               </div>
-               <button class="choice" id="btn-final-z3">GUARDAR Y VOLVER AL MAPA</button>
-           `;
-   
-           document.getElementById('btn-final-z3').onclick = () => {
-               finalizarNivel();
-           };
-       }
+        nivelActivo = false;
+        esperandoRespuesta = true;
+        
+        // Pausar sonidos de pasos y tocar victoria
+        sonidos.pasos.pause();
+        sonidos.victoria.play().catch(() => {});
+    
+        // 1. Limpiar imagen previa
+        imgElement.style.display = 'none';
+        imgElement.classList.add('hidden');
+    
+        // 2. Preparar modal
+        modal.style.zIndex = "5000"; 
+        modal.classList.remove('hidden');
+    
+        // 3. Título consistente
+        titulo.innerText = "¡CUMBRE ALCANZADA!";
+        
+        // Lógica de rango propia de Zona 3
+        let rango = "";
+        if (puntajeConcienciaTotal >= 18) { rango = "Conciencia Brillante 🌟"; }
+        else if (puntajeConcienciaTotal >= 12) { rango = "Conciencia en Crecimiento 🌱"; }
+        else { rango = "Conciencia en Construcción 🧩"; }
+    
+        // 4. Inyectar contenido con el estilo y COLORES idénticos a la Zona 2
+        container.innerHTML = `
+            <div style="text-align:center; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px #ffd166); animation: bounce 2s infinite;">💎</div>
+                
+                <p style="color:#333; font-size: 20px; font-weight: bold; margin: 10px 0; font-family: var(--font-body);">
+                    ¡Has obtenido la Gema de la Cumbre!
+                </p>
+                
+                <p style="color:var(--book-green); font-size: 18px; font-weight: bold; margin-bottom: 15px; font-family: var(--font-body);">
+                    ${rango}
+                </p>
+    
+                <div style="background: #f0f0f0; padding: 10px 30px; border-radius: 50px; border: 2px solid #ffd166; margin-bottom: 20px;">
+                    <span style="color:#333; font-family: var(--font-titles); font-size: 22px;">
+                        Puntos: ${puntajeConcienciaTotal}
+                    </span>
+                </div>
+    
+                <button class="choice" id="btn-final-z3" style="width: 100%; max-width: 250px; cursor: pointer; pointer-events: auto;">
+                    VOLVER AL MAPA
+                </button>
+            </div>
+        `;
+    
+        document.getElementById('btn-final-z3').onclick = () => {
+            finalizarNivel();
+        };
+    }
    
        function update() {
            if (!nivelActivo || esperandoRespuesta) return;
