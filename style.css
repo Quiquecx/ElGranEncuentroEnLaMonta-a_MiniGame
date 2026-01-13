@@ -165,7 +165,7 @@ button:hover {
 }
 
 /* ======================================================================
-   4. CONTROLES TÁCTILES UNIVERSALES
+   4. CONTROLES TÁCTILES UNIVERSALES (CORREGIDO)
    ====================================================================== */
 #mobile-controls {
     position: absolute;
@@ -176,7 +176,7 @@ button:hover {
     justify-content: space-between;
     padding: 0 40px;
     z-index: 99999;
-    pointer-events: none; 
+    pointer-events: none; /* Permite clics a través del contenedor */
 }
 
 #mobile-controls:not(.hidden) {
@@ -184,7 +184,7 @@ button:hover {
 }
 
 .controls-left, .controls-right {
-    pointer-events: auto;
+    pointer-events: auto !important; /* Permite clics en las agrupaciones */
 }
 
 .d-pad {
@@ -206,8 +206,10 @@ button:hover {
     color: white;
     cursor: pointer;
     user-select: none;
-    touch-action: manipulation;
+    -webkit-user-select: none;
+    touch-action: none; /* Importante para juegos 2D */
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    pointer-events: auto !important; /* Asegura detección de tacto */
 }
 
 .touch-btn:active {
@@ -216,7 +218,7 @@ button:hover {
 }
 
 /* ======================================================================
-   5. MODALES Y HUD
+   5. MODALES Y HUD (CORREGIDO)
    ====================================================================== */
 .modal-content {
     background: #ffffff;
@@ -245,6 +247,7 @@ button:hover {
     pointer-events: none;
 }
 
+/* Permitimos clics en los elementos internos del HUD si fuera necesario */
 #gem-count-display {
     background: rgba(0,0,0,0.7);
     padding: 10px 20px;
@@ -252,6 +255,7 @@ button:hover {
     border: 2px solid white;
     font-family: var(--font-titles);
     font-size: 1.2rem; color: white;
+    pointer-events: auto; 
 }
 
 .copyright-notice {
@@ -263,10 +267,11 @@ button:hover {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.6);
 }
+
 /* ======================================================================
    6. ESTILOS ESPECÍFICOS PARA LA PANTALLA FINAL - REPARADO
    ====================================================================== */
-   #final-treasure-screen {
+#final-treasure-screen {
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -67,35 +67,73 @@
            }
        };
    
-       const handleKeyDown = (e) => { keys[e.code] = true; if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) saltar(); };
+       const handleKeyDown = (e) => { 
+           keys[e.code] = true; 
+           if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) saltar(); 
+       };
        const handleKeyUp = (e) => keys[e.code] = false;
+   
+       // --- FUNCIÓN DE CONTROLES TÁCTILES (IGUAL A MAIN.JS) ---
+       function vincularControlesTactiles() {
+           const mapping = {
+               'btn-left': 'ArrowLeft', 
+               'btn-right': 'ArrowRight',
+               'btn-jump': 'ArrowUp' // En niveles usamos ArrowUp para saltar
+           };
+   
+           Object.entries(mapping).forEach(([id, key]) => {
+               const btn = document.getElementById(id);
+               if (btn) {
+                   btn.onpointerdown = (e) => { 
+                       e.preventDefault(); 
+                       keys[key] = true; 
+                       if (key === 'ArrowUp') saltar(); 
+                   };
+                   btn.onpointerup = (e) => { e.preventDefault(); keys[key] = false; };
+                   btn.onpointerleave = (e) => { e.preventDefault(); keys[key] = false; };
+               }
+           });
+       }
    
        function limpiarListeners() {
            window.removeEventListener('keydown', handleKeyDown);
            window.removeEventListener('keyup', handleKeyUp);
+           
+           // Limpiar eventos de puntero para evitar que se queden pegados al salir del nivel
+           [btnLeft, btnRight, btnJump].forEach(btn => {
+               if (btn) {
+                   btn.onpointerdown = null;
+                   btn.onpointerup = null;
+                   btn.onpointerleave = null;
+               }
+           });
+   
            clearInterval(timerInterval);
        }
    
+       // Inicialización de controles
        window.addEventListener('keydown', handleKeyDown);
        window.addEventListener('keyup', handleKeyUp);
+       vincularControlesTactiles();
    
-       // --- TRIVIA SIN COLOR AZUL BAJITO ---
        function iniciarTrivia(cofre) {
            esperandoRespuesta = true;
            sonidos.pasos.pause();
            sonidos.abrirCofre.currentTime = 0;
            sonidos.abrirCofre.play().catch(()=>{});
+           
+           // Resetear teclas para que no camine solo durante el modal
            Object.keys(keys).forEach(k => keys[k] = false);
    
            modal.classList.remove('hidden');
            if(imgEl) {
                imgEl.src = cofre.img;
                imgEl.style.display = "block";
+               imgEl.classList.remove('hidden');
            }
    
            titulo.innerText = "¡ADIVINA EL SACRAMENTO!";
            
-           // Pista corregida: Texto blanco con borde verde (eliminado el azul/cian)
            container.innerHTML = `
                <div style="background: rgba(0,0,0,0.7); padding: 15px; border-radius: 12px; border-left: 5px solid var(--book-green); margin-bottom: 15px;">
                    <p style="color: white; text-align: center; font-size: 16px; margin: 0; line-height: 1.4;">
@@ -246,57 +284,47 @@
        }
    
        function finalizarNivel() {
-        nivelActivo = false;
-        limpiarListeners();
-        cancelAnimationFrame(requestID);
-        
-        // Pausar sonidos de pasos y tocar victoria
-        sonidos.pasos.pause();
-        sonidos.victoria.play().catch(() => {});
-    
-        // 1. Limpiar imagen previa
-        if (imgEl) {
-            imgEl.classList.add('hidden');
-            imgEl.style.display = 'none';
-        }
-    
-        // 2. Preparar modal
-        modal.style.zIndex = "5000"; 
-        modal.classList.remove('hidden');
-    
-        // 3. Título consistente
-        titulo.innerText = "¡NIVEL COMPLETADO!";
-    
-        // 4. Inyectar contenido idéntico al estilo de la Zona 2
-        container.innerHTML = `
-            <div style="text-align:center; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div style="font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px #ffd166); animation: bounce 2s infinite;">💎</div>
-                
-                <p style="color:#333; font-size: 20px; font-weight: bold; margin: 10px 0; font-family: var(--font-body);">
-                    ¡Has obtenido la Gema del Valle!
-                </p>
-                
-                <p style="color:#555; font-size: 16px; margin-bottom: 15px; font-style: italic; font-family: var(--font-body);">
-                    "Los 7 sacramentos han sido revelados."
-                </p>
-    
-                <div style="background: #f0f0f0; padding: 10px 30px; border-radius: 50px; border: 2px solid #ffd166; margin-bottom: 20px;">
-                    <span style="color:#333; font-family: var(--font-titles); font-size: 22px;">
-                        Puntos: ${gemasRecolectadas}
-                    </span>
-                </div>
-    
-                <button class="choice" id="btn-finish" style="width: 100%; max-width: 250px; cursor: pointer; pointer-events: auto;">
-                    VOLVER AL MAPA
-                </button>
-            </div>
-        `;
-    
-        document.getElementById('btn-finish').onclick = () => {
-            modal.classList.add('hidden');
-            onComplete(gemasRecolectadas);
-        };
-    }
+           nivelActivo = false;
+           limpiarListeners();
+           cancelAnimationFrame(requestID);
+           
+           sonidos.pasos.pause();
+           sonidos.victoria.play().catch(() => {});
+       
+           if (imgEl) {
+               imgEl.classList.add('hidden');
+               imgEl.style.display = 'none';
+           }
+       
+           modal.style.zIndex = "5000"; 
+           modal.classList.remove('hidden');
+           titulo.innerText = "¡NIVEL COMPLETADO!";
+       
+           container.innerHTML = `
+               <div style="text-align:center; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                   <div style="font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px #ffd166); animation: bounce 2s infinite;">💎</div>
+                   <p style="color:#333; font-size: 20px; font-weight: bold; margin: 10px 0; font-family: var(--font-body);">
+                       ¡Has obtenido la Gema del Valle!
+                   </p>
+                   <p style="color:#555; font-size: 16px; margin-bottom: 15px; font-style: italic; font-family: var(--font-body);">
+                       "Los 7 sacramentos han sido revelados."
+                   </p>
+                   <div style="background: #f0f0f0; padding: 10px 30px; border-radius: 50px; border: 2px solid #ffd166; margin-bottom: 20px;">
+                       <span style="color:#333; font-family: var(--font-titles); font-size: 22px;">
+                           Puntos: ${gemasRecolectadas}
+                       </span>
+                   </div>
+                   <button class="choice" id="btn-finish" style="width: 100%; max-width: 250px; cursor: pointer; pointer-events: auto;">
+                       VOLVER AL MAPA
+                   </button>
+               </div>
+           `;
+       
+           document.getElementById('btn-finish').onclick = () => {
+               modal.classList.add('hidden');
+               onComplete(gemasRecolectadas);
+           };
+       }
    
        if (assets.player.complete) mostrarMensajeInicio();
        else assets.player.onload = mostrarMensajeInicio;

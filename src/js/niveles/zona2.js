@@ -13,6 +13,11 @@
        const imgElement = document.getElementById('current-sacramento-img');
        const gemDisplay = document.getElementById('gem-count');
    
+       // Botones para control táctil
+       const btnLeft = document.getElementById('btn-left');
+       const btnRight = document.getElementById('btn-right');
+       const btnJump = document.getElementById('btn-jump');
+   
        const VIEWPORT_WIDTH = 900;
        const WORLD_WIDTH = 3000; 
        const GROUND_Y = 450;
@@ -56,9 +61,57 @@
            abierto: false
        }));
    
+       // --- SISTEMA DE CONTROLES (IGUAL A MAIN Y ZONA 1) ---
+       const saltar = () => {
+           if (!player.isJumping && !esperandoRespuesta && nivelActivo) {
+               player.vy = player.jumpPower; 
+               player.isJumping = true;
+               sonidos.salto.currentTime = 0;
+               sonidos.salto.play().catch(() => {});
+           }
+       };
+   
+       function vincularControlesTactiles() {
+           const mapping = {
+               'btn-left': 'ArrowLeft', 
+               'btn-right': 'ArrowRight',
+               'btn-jump': 'ArrowUp'
+           };
+           Object.entries(mapping).forEach(([id, key]) => {
+               const btn = document.getElementById(id);
+               if (btn) {
+                   btn.onpointerdown = (e) => { 
+                       e.preventDefault(); 
+                       keys[key] = true; 
+                       if (key === 'ArrowUp') saltar(); 
+                   };
+                   btn.onpointerup = (e) => { e.preventDefault(); keys[key] = false; };
+                   btn.onpointerleave = (e) => { e.preventDefault(); keys[key] = false; };
+               }
+           });
+       }
+   
+       const handleKeyDown = (e) => { 
+           keys[e.code] = true; 
+           if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) saltar();
+       };
+       const handleKeyUp = (e) => keys[e.code] = false;
+   
+       function limpiarListeners() {
+           window.removeEventListener('keydown', handleKeyDown);
+           window.removeEventListener('keyup', handleKeyUp);
+           [btnLeft, btnRight, btnJump].forEach(btn => {
+               if (btn) {
+                   btn.onpointerdown = null;
+                   btn.onpointerup = null;
+                   btn.onpointerleave = null;
+               }
+           });
+           if (requestID) cancelAnimationFrame(requestID);
+       }
+   
        function procesarPuntaje(pts) {
            let puntosValidados = Math.min(Math.max(pts, 0), 2);
-   
            if (puntosValidados === 2) {
                sonidos.correcto.currentTime = 0;
                sonidos.correcto.play().catch(() => {});
@@ -69,7 +122,6 @@
                sonidos.error.currentTime = 0;
                sonidos.error.play().catch(() => {});
            }
-   
            puntajeEspirituTotal += puntosValidados;
            let actualHUD = parseInt(gemDisplay.innerText) || 0;
            gemDisplay.innerText = actualHUD + puntosValidados;
@@ -108,13 +160,10 @@
                btn.onclick = () => {
                    container.innerHTML = "";
                    procesarPuntaje(opt.pts);
-                   
-                   let msg = "";
-                   let icono = "";
+                   let msg = ""; let icono = "";
                    if (opt.pts >= 2) { msg = "¡EXCELENTE! ✨"; icono = "✅"; }
                    else if (opt.pts === 1) { msg = "¡BIEN! 👍"; icono = "🤔"; }
                    else { msg = "SIGUE APRENDIENDO 📚"; icono = "❌"; }
-   
                    finalizarReto(titulo, `${icono} ${msg} +${opt.pts}`, reto);
                };
                container.appendChild(btn);
@@ -211,9 +260,7 @@
            document.getElementById('btn-final-z2').onclick = (e) => {
                e.preventDefault();
                modal.classList.add('hidden');
-               window.removeEventListener('keydown', handleKeyDown);
-               window.removeEventListener('keyup', handleKeyUp);
-               if (requestID) cancelAnimationFrame(requestID);
+               limpiarListeners();
                onComplete(puntajeEspirituTotal);
            };
        }
@@ -222,10 +269,13 @@
            if (!nivelActivo || esperandoRespuesta) return;
            if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; player.facingRight = true; }
            else if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; player.facingRight = false; }
+           
            player.vy += player.gravity; player.y += player.vy;
            if (player.y > GROUND_Y) { player.y = GROUND_Y; player.vy = 0; player.isJumping = false; }
+           
            player.x = Math.max(0, Math.min(WORLD_WIDTH - player.w, player.x));
            cameraX = Math.max(0, Math.min(WORLD_WIDTH - VIEWPORT_WIDTH, player.x - VIEWPORT_WIDTH / 2));
+           
            cofres.forEach(cofre => {
                if (!cofre.abierto && Math.abs(player.x - cofre.x) < 40 && Math.abs(player.y - cofre.y) < 60) {
                    abrirReto(cofre);
@@ -260,18 +310,12 @@
            }
        }
    
-       const handleKeyDown = (e) => { 
-           keys[e.code] = true; 
-           if (['Space', 'ArrowUp', 'KeyW'].includes(e.code) && !player.isJumping && !esperandoRespuesta && nivelActivo) {
-               player.vy = player.jumpPower; player.isJumping = true;
-               sonidos.salto.play().catch(() => {});
-           }
-       };
-       const handleKeyUp = (e) => keys[e.code] = false;
-   
+       // Inicialización
        window.addEventListener('keydown', handleKeyDown);
        window.addEventListener('keyup', handleKeyUp);
+       vincularControlesTactiles();
    
+       // Mostrar mensaje de inicio
        esperandoRespuesta = true;
        modal.classList.remove('hidden');
        imgElement.style.display = 'none';

@@ -13,6 +13,11 @@
        const imgElement = document.getElementById('current-sacramento-img');
        const gemDisplay = document.getElementById('gem-count');
    
+       // Botones para control táctil
+       const btnLeft = document.getElementById('btn-left');
+       const btnRight = document.getElementById('btn-right');
+       const btnJump = document.getElementById('btn-jump');
+   
        const VIEWPORT_WIDTH = 900;
        const WORLD_WIDTH = 3000; 
        const GROUND_Y = 450;
@@ -21,7 +26,7 @@
        let esperandoRespuesta = false;
        let cameraX = 0; 
        let retosCompletados = 0;
-       let puntajeConcienciaTotal = 0; // Puntuación interna de la zona
+       let puntajeConcienciaTotal = 0; 
        let requestID = null;
    
        const assets = {
@@ -44,8 +49,7 @@
        const keys = {};
        const inicioX = 600;
        const finX = WORLD_WIDTH - 400;
-       const espacioDisponible = finX - inicioX;
-       const intervalo = espacioDisponible / (zona3Data.length - 1 || 1);
+       const intervalo = (finX - inicioX) / (zona3Data.length - 1 || 1);
    
        let cofres = zona3Data.map((data, i) => ({
            ...data,
@@ -55,51 +59,82 @@
            abierto: false
        }));
    
-       const handleKeyDown = (e) => { 
-           keys[e.code] = true; 
-           if ((e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') && !player.isJumping && !esperandoRespuesta && nivelActivo) {
+       // --- SISTEMA DE CONTROLES UNIFICADO ---
+       const saltar = () => {
+           if (!player.isJumping && !esperandoRespuesta && nivelActivo) {
                player.vy = player.jumpPower; 
                player.isJumping = true;
                sonidos.salto.currentTime = 0;
                sonidos.salto.play().catch(()=>{});
            }
        };
+   
+       function vincularControlesTactiles() {
+           const mapping = {
+               'btn-left': 'ArrowLeft', 
+               'btn-right': 'ArrowRight',
+               'btn-jump': 'ArrowUp'
+           };
+           Object.entries(mapping).forEach(([id, key]) => {
+               const btn = document.getElementById(id);
+               if (btn) {
+                   btn.onpointerdown = (e) => { 
+                       e.preventDefault(); 
+                       keys[key] = true; 
+                       if (key === 'ArrowUp') saltar(); 
+                   };
+                   btn.onpointerup = (e) => { e.preventDefault(); keys[key] = false; };
+                   btn.onpointerleave = (e) => { e.preventDefault(); keys[key] = false; };
+               }
+           });
+       }
+   
+       const handleKeyDown = (e) => { 
+           keys[e.code] = true; 
+           if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) saltar();
+       };
        const handleKeyUp = (e) => keys[e.code] = false;
    
-       window.addEventListener('keydown', handleKeyDown);
-       window.addEventListener('keyup', handleKeyUp);
+       function limpiarListeners() {
+           window.removeEventListener('keydown', handleKeyDown);
+           window.removeEventListener('keyup', handleKeyUp);
+           [btnLeft, btnRight, btnJump].forEach(btn => {
+               if (btn) {
+                   btn.onpointerdown = null;
+                   btn.onpointerup = null;
+                   btn.onpointerleave = null;
+               }
+           });
+           if (requestID) cancelAnimationFrame(requestID);
+       }
    
        function mostrarMensajeInicio() {
-        esperandoRespuesta = true;
-        nivelActivo = false;
-        modal.classList.remove('hidden');
-        
-        // IMPORTANTE: Aseguramos que la imagen no estorbe
-        imgElement.style.display = 'none'; 
-        imgElement.classList.add('hidden');
-        
-        titulo.innerText = "LA CIMA DE LA CONCIENCIA";
-        
-        // Envolvemos todo en un div para que el CSS de 'options-container' no rompa el texto
-        container.innerHTML = `
-            <div style="width: 100%; padding: 10px;">
-                <p style="color: #333 !important; margin-bottom: 25px; text-align: center; font-family: var(--font-body); font-size: 1.1rem; line-height: 1.4;">
-                    Estás en la cumbre. Aquí cada elección cuenta.<br>
-                    Actúa según los mandamientos para alcanzar el tesoro final.
-                </p>
-                <div style="display: flex; justify-content: center; width: 100%;">
-                    <button class="choice" id="btn-comenzar-z3" style="width: 220px;">¡COMENZAR!</button>
-                </div>
-            </div>
-        `;
-    
-        document.getElementById('btn-comenzar-z3').onclick = () => {
-            modal.classList.add('hidden');
-            esperandoRespuesta = false;
-            nivelActivo = true;
-            loop();
-        };
-    }
+           esperandoRespuesta = true;
+           nivelActivo = false;
+           modal.classList.remove('hidden');
+           imgElement.style.display = 'none'; 
+           imgElement.classList.add('hidden');
+           titulo.innerText = "LA CIMA DE LA CONCIENCIA";
+           
+           container.innerHTML = `
+               <div style="width: 100%; padding: 10px;">
+                   <p style="color: #333 !important; margin-bottom: 25px; text-align: center; font-family: var(--font-body); font-size: 1.1rem; line-height: 1.4;">
+                       Estás en la cumbre. Aquí cada elección cuenta.<br>
+                       Actúa según los mandamientos para alcanzar el tesoro final.
+                   </p>
+                   <div style="display: flex; justify-content: center; width: 100%;">
+                       <button class="choice" id="btn-comenzar-z3" style="width: 220px;">¡COMENZAR!</button>
+                   </div>
+               </div>
+           `;
+       
+           document.getElementById('btn-comenzar-z3').onclick = () => {
+               modal.classList.add('hidden');
+               esperandoRespuesta = false;
+               nivelActivo = true;
+               loop();
+           };
+       }
    
        function abrirRetoConciencia(cofre) {
            esperandoRespuesta = true;
@@ -127,21 +162,16 @@
                btn.innerText = opt.texto;
                btn.onclick = () => {
                    container.innerHTML = ""; 
-   
                    if (opt.pts === 2) sonidos.correcto.play().catch(()=>{});
                    else if (opt.pts === 1) sonidos.salto.play().catch(()=>{});
                    else sonidos.error.play().catch(()=>{});
    
-                   // --- ACTUALIZACIÓN DE AMBOS PUNTAJES ---
-                   puntajeConcienciaTotal += opt.pts; // Puntaje para el nivel de conciencia
-                   
-                   // Actualizamos el contador visual general (gem-count) en el mapa
+                   puntajeConcienciaTotal += opt.pts; 
                    let puntajeActualHUD = parseInt(gemDisplay.innerText) || 0;
                    gemDisplay.innerText = puntajeActualHUD + opt.pts;
    
                    cofre.abierto = true;
                    retosCompletados++;
-   
                    let icono = opt.pts === 2 ? "✅" : (opt.pts === 1 ? "🤔" : "❌");
                    titulo.innerText = `${icono} +${opt.pts} diamante(s)`;
    
@@ -159,65 +189,53 @@
        }
    
        function mostrarFinalConciencia() {
-        nivelActivo = false;
-        esperandoRespuesta = true;
-        
-        // Pausar sonidos de pasos y tocar victoria
-        sonidos.pasos.pause();
-        sonidos.victoria.play().catch(() => {});
-    
-        // 1. Limpiar imagen previa
-        imgElement.style.display = 'none';
-        imgElement.classList.add('hidden');
-    
-        // 2. Preparar modal
-        modal.style.zIndex = "5000"; 
-        modal.classList.remove('hidden');
-    
-        // 3. Título consistente
-        titulo.innerText = "¡CUMBRE ALCANZADA!";
-        
-        // Lógica de rango propia de Zona 3
-        let rango = "";
-        if (puntajeConcienciaTotal >= 18) { rango = "Conciencia Brillante 🌟"; }
-        else if (puntajeConcienciaTotal >= 12) { rango = "Conciencia en Crecimiento 🌱"; }
-        else { rango = "Conciencia en Construcción 🧩"; }
-    
-        // 4. Inyectar contenido con el estilo y COLORES idénticos a la Zona 2
-        container.innerHTML = `
-            <div style="text-align:center; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div style="font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px #ffd166); animation: bounce 2s infinite;">💎</div>
-                
-                <p style="color:#333; font-size: 20px; font-weight: bold; margin: 10px 0; font-family: var(--font-body);">
-                    ¡Has obtenido la Gema de la Cumbre!
-                </p>
-                
-                <p style="color:var(--book-green); font-size: 18px; font-weight: bold; margin-bottom: 15px; font-family: var(--font-body);">
-                    ${rango}
-                </p>
-    
-                <div style="background: #f0f0f0; padding: 10px 30px; border-radius: 50px; border: 2px solid #ffd166; margin-bottom: 20px;">
-                    <span style="color:#333; font-family: var(--font-titles); font-size: 22px;">
-                        Puntos: ${puntajeConcienciaTotal}
-                    </span>
-                </div>
-    
-                <button class="choice" id="btn-final-z3" style="width: 100%; max-width: 250px; cursor: pointer; pointer-events: auto;">
-                    VOLVER AL MAPA
-                </button>
-            </div>
-        `;
-    
-        document.getElementById('btn-final-z3').onclick = () => {
-            finalizarNivel();
-        };
-    }
+           nivelActivo = false;
+           esperandoRespuesta = true;
+           sonidos.pasos.pause();
+           sonidos.victoria.play().catch(() => {});
+       
+           imgElement.style.display = 'none';
+           imgElement.classList.add('hidden');
+           modal.style.zIndex = "5000"; 
+           modal.classList.remove('hidden');
+           titulo.innerText = "¡CUMBRE ALCANZADA!";
+           
+           let rango = "";
+           if (puntajeConcienciaTotal >= 18) { rango = "Conciencia Brillante 🌟"; }
+           else if (puntajeConcienciaTotal >= 12) { rango = "Conciencia en Crecimiento 🌱"; }
+           else { rango = "Conciencia en Construcción 🧩"; }
+       
+           container.innerHTML = `
+               <div style="text-align:center; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                   <div style="font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px #ffd166); animation: bounce 2s infinite;">💎</div>
+                   <p style="color:#333; font-size: 20px; font-weight: bold; margin: 10px 0; font-family: var(--font-body);">
+                       ¡Has obtenido la Gema de la Cumbre!
+                   </p>
+                   <p style="color:var(--book-green); font-size: 18px; font-weight: bold; margin-bottom: 15px; font-family: var(--font-body);">
+                       ${rango}
+                   </p>
+                   <div style="background: #f0f0f0; padding: 10px 30px; border-radius: 50px; border: 2px solid #ffd166; margin-bottom: 20px;">
+                       <span style="color:#333; font-family: var(--font-titles); font-size: 22px;">
+                           Puntos: ${puntajeConcienciaTotal}
+                       </span>
+                   </div>
+                   <button class="choice" id="btn-final-z3" style="width: 100%; max-width: 250px; cursor: pointer; pointer-events: auto;">
+                       VOLVER AL MAPA
+                   </button>
+               </div>
+           `;
+       
+           document.getElementById('btn-final-z3').onclick = () => {
+               finalizarNivel();
+           };
+       }
    
        function update() {
            if (!nivelActivo || esperandoRespuesta) return;
            let moviendose = false;
            if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; player.facingRight = true; moviendose = true; }
            if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; player.facingRight = false; moviendose = true; }
+           
            if (moviendose && !player.isJumping) {
                if (sonidos.pasos.paused) sonidos.pasos.play().catch(()=>{});
            } else { sonidos.pasos.pause(); }
@@ -268,13 +286,14 @@
        }
    
        function finalizarNivel() {
-           cancelAnimationFrame(requestID);
-           window.removeEventListener('keydown', handleKeyDown);
-           window.removeEventListener('keyup', handleKeyUp);
+           limpiarListeners();
            modal.classList.add('hidden');
-           // Al mapa solo le pasamos el puntaje de conciencia para guardarlo si es necesario
            onComplete(puntajeConcienciaTotal);
        }
    
+       // Inicialización
+       window.addEventListener('keydown', handleKeyDown);
+       window.addEventListener('keyup', handleKeyUp);
+       vincularControlesTactiles();
        mostrarMensajeInicio(); 
    }

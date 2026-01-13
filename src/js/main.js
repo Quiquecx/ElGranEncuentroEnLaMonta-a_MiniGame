@@ -187,14 +187,17 @@
    }
    
    function finalizarNivel(puntosObtenidos = 0) {
-       estaEnNivel = false;
-       puntosTotales += puntosObtenidos;
-       zonasCompletadas++; 
-       document.getElementById('gem-count').innerText = puntosTotales;
-       sonidos.victoria.play().catch(()=>{});
-       setTimeout(() => { if(!estaEnNivel && !gamePaused) sonidos.intro.play().catch(()=>{}); }, 1000);
-       player.x += 40; player.y += 40;
-   }
+    estaEnNivel = false;
+    puntosTotales += puntosObtenidos;
+    zonasCompletadas++; 
+    document.getElementById('gem-count').innerText = puntosTotales;
+    vincularControlesTactiles();
+    sonidos.victoria.play().catch(()=>{});
+    setTimeout(() => { 
+        if(!estaEnNivel && !gamePaused) sonidos.intro.play().catch(()=>{}); 
+    }, 1000);
+    player.x += 40; player.y += 40;
+}
    
    function draw() {
        ctx.clearRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
