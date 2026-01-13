@@ -71,8 +71,8 @@ export const zona2Data = [
         pregunta: "El Padre Nuestro contiene un código que:",
         opciones: [
             { texto: "Nos da siete secretos para comunicarnos con Dios.", pts: 0 },
-            { texto: "Nos enseña a orar al Padre", pts: 5 },
-            { texto: "Contiene siete peticiones que nos invitan a orar a nuestro Padre", pts: 10 }
+            { texto: "Nos enseña a orar al Padre", pts: 1 },
+            { texto: "Contiene siete peticiones que nos invitan a orar a nuestro Padre", pts: 2 }
         ]
     },
     {
@@ -80,9 +80,9 @@ export const zona2Data = [
         tipo: "trivia",
         pregunta: "Cuando oramos:",
         opciones: [
-            { texto: "Jesús está en medio de nosotros y nos escucha desde el corazón", pts: 10 },
-            { texto: "Si es con amor Jesús está presente", pts: 5 },
-            { texto: "Jesús recibe tus oraciones", pts: 5 }
+            { texto: "Jesús está en medio de nosotros y nos escucha desde el corazón", pts: 2 },
+            { texto: "Si es con amor Jesús está presente", pts: 1 },
+            { texto: "Jesús recibe tus oraciones", pts: 1 }
         ]
     },
     {
@@ -90,8 +90,8 @@ export const zona2Data = [
         tipo: "decision",
         pregunta: "En el recreo, Sofía tiene libertad para decidir qué hacer:",
         opciones: [
-            { texto: "Jugar fútbol con sus amigos, como siempre.", pts: 5 },
-            { texto: "Acompañar a Mariana, una compañera nueva que está sola.", pts: 10 }
+            { texto: "Jugar fútbol con sus amigos, como siempre.", pts: 1 },
+            { texto: "Acompañar a Mariana, una compañera nueva que está sola.", pts: 2 }
         ],
         feedback: "La libertad implica pensar en los demás y elegir lo justo."
     },
@@ -100,8 +100,8 @@ export const zona2Data = [
         tipo: "decision",
         pregunta: "¿Qué valor es más importante en este momento?",
         opciones: [
-            { texto: "La diversión personal", pts: 2 },
-            { texto: "La solidaridad con los demás", pts: 10 }
+            { texto: "La diversión personal", pts: 1 },
+            { texto: "La solidaridad con los demás", pts: 2 }
         ]
     },
     {
@@ -109,8 +109,8 @@ export const zona2Data = [
         tipo: "decision",
         pregunta: "¿Si estuvieras en la situación de Sofía, qué harías?",
         opciones: [
-            { texto: "Elegiría mi diversión personal", pts: 2 },
-            { texto: "Elegiría la solidaridad", pts: 10 }
+            { texto: "Elegiría mi diversión personal", pts: 1 },
+            { texto: "Elegiría la solidaridad", pts: 2 }
         ]
     },
     {
@@ -118,8 +118,8 @@ export const zona2Data = [
         tipo: "trivia",
         pregunta: "Elige los hábitos buenos que practicas:",
         opciones: [
-            { texto: "Humildad y caridad", pts: 10 },
-            { texto: "Paciencia y pereza", pts: 0 },
+            { texto: "Humildad y caridad", pts: 2 },
+            { texto: "Paciencia y pereza", pts: 1 },
             { texto: "Envidia y orgullo", pts: 0 }
         ]
     },
@@ -163,8 +163,8 @@ export const zona3Data = [
         mandamiento: "Santificarás las fiestas",
         situacion: "El domingo hay misa y un partido de fútbol.",
         opciones: [
-            { texto: "Vas a misa.", pts: 2 },
-            { texto: "Cumples con misa y después vas al partido.", pts: 1 },
+            { texto: "Vas a misa.", pts: 1 },
+            { texto: "Cumples con misa y después vas al partido.", pts: 2 },
             { texto: "Vas al partido.", pts: 0 }
         ]
     },
@@ -172,11 +172,11 @@ export const zona3Data = [
         n: 4,
         img: 'src/imgs/imgsZona3/4.png',
         mandamiento: "Honrarás a tu padre y a tu madre",
-        situacion: "Tu mamá te pide ayuda para poner la mesa.",
+        situacion: "Estas viendo TV, y piden tu ayuda para poner la mesa.",
         opciones: [
             { texto: "Ayudas de inmediato.", pts: 2 },
             { texto: "Terminas de ver TV y después ayudas.", pts: 1 },
-            { texto: "Ignoras y sigues viendo tele.", pts: 0 }
+            { texto: "Ignoras y sigues viendo TV.", pts: 0 }
         ]
     },
     {

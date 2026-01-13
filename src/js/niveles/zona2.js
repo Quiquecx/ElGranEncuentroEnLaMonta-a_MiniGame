@@ -1,5 +1,5 @@
 /* ======================================================================
-   ZONA 2: EL SENDERO DEL ESPÍRITU - CORREGIDO (PUNTOS Y CIERRE)
+   ZONA 2: EL SENDERO DEL ESPÍRITU - CORREGIDO (LÓGICA DE PUNTOS DINÁMICA)
    ====================================================================== */
    import { zona2Data } from '../../data/preguntas.js';
    import { sonidos } from '../main.js'; 
@@ -56,14 +56,19 @@
            abierto: false
        }));
    
-       // --- LÓGICA DE PUNTOS (LIMITADA A MÁXIMO 2) ---
        function procesarPuntaje(pts) {
-           // Forzamos que el valor nunca sea mayor a 2 ni menor a 0
            let puntosValidados = Math.min(Math.max(pts, 0), 2);
    
-           if (puntosValidados === 2) sonidos.correcto.play().catch(() => {});
-           else if (puntosValidados === 1) sonidos.salto.play().catch(() => {});
-           else sonidos.error.play().catch(() => {});
+           if (puntosValidados === 2) {
+               sonidos.correcto.currentTime = 0;
+               sonidos.correcto.play().catch(() => {});
+           } else if (puntosValidados === 1) {
+               sonidos.salto.currentTime = 0;
+               sonidos.salto.play().catch(() => {});
+           } else {
+               sonidos.error.currentTime = 0;
+               sonidos.error.play().catch(() => {});
+           }
    
            puntajeEspirituTotal += puntosValidados;
            let actualHUD = parseInt(gemDisplay.innerText) || 0;
@@ -75,8 +80,6 @@
            intentosEnRetoActual = 0;
            sonidos.pasos.pause();
            sonidos.abrirCofre.play().catch(() => {});
-           
-           // Limpiar teclas para evitar que el personaje siga corriendo
            Object.keys(keys).forEach(k => keys[k] = false);
            
            modal.classList.remove('hidden');
@@ -105,8 +108,14 @@
                btn.onclick = () => {
                    container.innerHTML = "";
                    procesarPuntaje(opt.pts);
-                   let msg = opt.pts >= 2 ? "¡EXCELENTE! ✨" : (opt.pts === 1 ? "¡BIEN! 👍" : "SIGUE APRENDIENDO 📚");
-                   finalizarReto(titulo, `${msg} +${Math.min(opt.pts, 2)}`, reto);
+                   
+                   let msg = "";
+                   let icono = "";
+                   if (opt.pts >= 2) { msg = "¡EXCELENTE! ✨"; icono = "✅"; }
+                   else if (opt.pts === 1) { msg = "¡BIEN! 👍"; icono = "🤔"; }
+                   else { msg = "SIGUE APRENDIENDO 📚"; icono = "❌"; }
+   
+                   finalizarReto(titulo, `${icono} ${msg} +${opt.pts}`, reto);
                };
                container.appendChild(btn);
            });
@@ -137,7 +146,8 @@
                    if (zonaDestino.innerText.trim() === reto.solucion) {
                        let ptsFinales = (intentosEnRetoActual === 0) ? 2 : 1;
                        procesarPuntaje(ptsFinales);
-                       finalizarReto(titulo, `¡CORRECTO! +${ptsFinales} ✨`, reto);
+                       let feedback = (ptsFinales === 2) ? "¡EXCELENTE! ✨" : "¡BIEN! 👍";
+                       finalizarReto(titulo, `${feedback} +${ptsFinales}`, reto);
                    } else if (seleccionadas.length >= reto.palabras.length) {
                        sonidos.error.play().catch(() => {});
                        intentosEnRetoActual++;
@@ -167,85 +177,55 @@
        }
    
        function mostrarMensajeFinal() {
-        nivelActivo = false; 
-        esperandoRespuesta = true;
-        
-        // Pausar sonidos de pasos y tocar victoria
-        sonidos.pasos.pause();
-        sonidos.victoria.play().catch(() => {});
-        
-        // 1. Limpiar cualquier imagen previa que pueda estorbar
-        imgElement.classList.add('hidden');
-        imgElement.style.display = 'none';
-    
-        // 2. Asegurar que el modal esté por encima de todo
-        modal.style.zIndex = "5000"; 
-        modal.classList.remove('hidden');
-    
-        // 3. Título claro
-        titulo.innerText = "¡NIVEL COMPLETADO!";
-    
-        // 4. Inyectar contenido con estilos de seguridad
-        container.innerHTML = `
-            <div style="text-align:center; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div style="font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px #ffd166); animation: bounce 2s infinite;">💎</div>
-                
-                <p style="color:#333; font-size: 20px; font-weight: bold; margin: 10px 0; font-family: var(--font-body);">
-                    ¡Has obtenido la Gema de la Sabiduría!
-                </p>
-                
-                <p style="color:#555; font-size: 16px; margin-bottom: 15px; font-style: italic;">
-                    "Has elegido tu propio camino."
-                </p>
-    
-                <div style="background: #f0f0f0; padding: 10px 30px; border-radius: 50px; border: 2px solid #ffd166; margin-bottom: 20px;">
-                    <span style="color:#333; font-family: var(--font-titles); font-size: 22px;">
-                        Puntos: ${puntajeEspirituTotal}
-                    </span>
-                </div>
-    
-                <button class="choice" id="btn-final-z2" style="width: 100%; max-width: 250px; cursor: pointer; pointer-events: auto;">
-                    VOLVER AL MAPA
-                </button>
-            </div>
-        `;
-    
-        // 5. Listener de cierre corregido
-        const btnFinal = document.getElementById('btn-final-z2');
-        btnFinal.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log("Cerrando Nivel 2...");
-            
-            // Ocultar modal y limpiar eventos
-            modal.classList.add('hidden');
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
-            
-            if (requestID) cancelAnimationFrame(requestID);
-            
-            // Devolver el puntaje al mapa
-            onComplete(puntajeEspirituTotal);
-        };
-    }
+           nivelActivo = false; 
+           esperandoRespuesta = true;
+           sonidos.pasos.pause();
+           sonidos.victoria.play().catch(() => {});
+           
+           imgElement.classList.add('hidden');
+           imgElement.style.display = 'none';
+           modal.style.zIndex = "5000"; 
+           modal.classList.remove('hidden');
+           titulo.innerText = "¡NIVEL COMPLETADO!";
    
-       // --- NÚCLEO DEL JUEGO ---
+           container.innerHTML = `
+               <div style="text-align:center; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                   <div style="font-size: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px #ffd166); animation: bounce 2s infinite;">💎</div>
+                   <p style="color:#333; font-size: 20px; font-weight: bold; margin: 10px 0; font-family: var(--font-body);">
+                       ¡Has obtenido la Gema del Sendero del Espíritu!
+                   </p>
+                   <p style="color:#555; font-size: 16px; margin-bottom: 15px; font-style: italic;">
+                       "Has elegido tu propio camino."
+                   </p>
+                   <div style="background: #f0f0f0; padding: 10px 30px; border-radius: 50px; border: 2px solid #ffd166; margin-bottom: 20px;">
+                       <span style="color:#333; font-family: var(--font-titles); font-size: 22px;">
+                           Puntos: ${puntajeEspirituTotal}
+                       </span>
+                   </div>
+                   <button class="choice" id="btn-final-z2" style="width: 100%; max-width: 250px; cursor: pointer; pointer-events: auto;">
+                       VOLVER AL MAPA
+                   </button>
+               </div>
+           `;
+   
+           document.getElementById('btn-final-z2').onclick = (e) => {
+               e.preventDefault();
+               modal.classList.add('hidden');
+               window.removeEventListener('keydown', handleKeyDown);
+               window.removeEventListener('keyup', handleKeyUp);
+               if (requestID) cancelAnimationFrame(requestID);
+               onComplete(puntajeEspirituTotal);
+           };
+       }
+   
        function update() {
            if (!nivelActivo || esperandoRespuesta) return;
-           
-           if (keys['ArrowRight'] || keys['KeyD']) { 
-               player.x += player.speed; player.facingRight = true; 
-           } else if (keys['ArrowLeft'] || keys['KeyA']) { 
-               player.x -= player.speed; player.facingRight = false; 
-           }
-           
+           if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; player.facingRight = true; }
+           else if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; player.facingRight = false; }
            player.vy += player.gravity; player.y += player.vy;
            if (player.y > GROUND_Y) { player.y = GROUND_Y; player.vy = 0; player.isJumping = false; }
-   
            player.x = Math.max(0, Math.min(WORLD_WIDTH - player.w, player.x));
            cameraX = Math.max(0, Math.min(WORLD_WIDTH - VIEWPORT_WIDTH, player.x - VIEWPORT_WIDTH / 2));
-   
            cofres.forEach(cofre => {
                if (!cofre.abierto && Math.abs(player.x - cofre.x) < 40 && Math.abs(player.y - cofre.y) < 60) {
                    abrirReto(cofre);
@@ -258,20 +238,16 @@
            ctx.save();
            ctx.translate(-Math.floor(cameraX), 0);
            if (assets.fondo.complete) ctx.drawImage(assets.fondo, 0, 0, WORLD_WIDTH, canvas.height);
-           
            cofres.forEach(c => {
                let img = c.abierto ? assets.cofreAbierto : assets.cofreCerrado;
                if (img.complete) ctx.drawImage(img, c.x, c.y, c.w, c.h);
            });
-   
            if (assets.player.complete) {
                ctx.save();
                if (!player.facingRight) {
                    ctx.translate(player.x + player.w, player.y); ctx.scale(-1, 1);
                    ctx.drawImage(assets.player, 0, 0, player.w, player.h);
-               } else {
-                   ctx.drawImage(assets.player, player.x, player.y, player.w, player.h);
-               }
+               } else { ctx.drawImage(assets.player, player.x, player.y, player.w, player.h); }
                ctx.restore();
            }
            ctx.restore();
@@ -296,47 +272,25 @@
        window.addEventListener('keydown', handleKeyDown);
        window.addEventListener('keyup', handleKeyUp);
    
-      // --- INICIO DEL NIVEL CON LIMPIEZA PROFUNDA ---
-    esperandoRespuesta = true;
-
-    // 1. Ocultar y limpiar elementos del "Final del Juego" que puedan estar visibles
-    const chestAnim = document.getElementById('treasure-chest-anim');
-    const statsSummary = document.getElementById('stats-summary');
-    const finalRank = document.getElementById('final-rank-text');
-
-    if (chestAnim) {
-        chestAnim.classList.add('hidden');
-        chestAnim.classList.remove('chest-open'); // Quita la imagen del cofre
-        chestAnim.style.display = 'none';         // Fuerza la desaparición
-    }
-    if (statsSummary) statsSummary.innerHTML = "";
-    if (finalRank) finalRank.innerText = "";
-
-    // 2. Limpiar el modal de trivia para la Zona 2
-    modal.classList.remove('hidden');
-    imgElement.classList.add('hidden'); // Oculta la imagen de sacramentos si existía
-    imgElement.style.display = 'none';
-
-    // 3. Configurar el contenido del mensaje inicial
-    titulo.innerText = "EL SENDERO DEL ESPÍRITU";
-    titulo.style.color = "var(--primary-purple)"; // Asegurar color legible
-    
-    container.innerHTML = `
-        <div style="text-align:center;">
-            <p style="color:#333; font-weight:bold; margin-bottom:20px; font-size:1.2rem;">
-                Ordena los mensajes y resuelve los dilemas para llegar a la cima.
-            </p>
-            <button class="choice" id="btn-start-z2" style="padding:15px 40px; font-size:1.2rem;">
-                ¡COMENZAR!
-            </button>
-        </div>
-    `;
-
-    // 4. Lógica del botón de inicio
-    document.getElementById('btn-start-z2').onclick = () => {
-        modal.classList.add('hidden');
-        esperandoRespuesta = false;
-        nivelActivo = true;
-        loop();
-    };
+       esperandoRespuesta = true;
+       modal.classList.remove('hidden');
+       imgElement.style.display = 'none';
+       titulo.innerText = "EL SENDERO DEL ESPÍRITU";
+       container.innerHTML = `
+           <div style="text-align:center;">
+               <p style="color:#333; font-weight:bold; margin-bottom:20px; font-size:1.2rem;">
+                   Ordena los mensajes y resuelve los dilemas para llegar a la cima.
+               </p>
+               <button class="choice" id="btn-start-z2" style="padding:15px 40px; font-size:1.2rem;">
+                   ¡COMENZAR!
+               </button>
+           </div>
+       `;
+   
+       document.getElementById('btn-start-z2').onclick = () => {
+           modal.classList.add('hidden');
+           esperandoRespuesta = false;
+           nivelActivo = true;
+           loop();
+       };
    }

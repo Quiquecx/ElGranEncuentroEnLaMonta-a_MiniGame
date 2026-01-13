@@ -223,38 +223,45 @@
    }
    
    function mostrarCofreFinal() {
-       estaEnNivel = true;
-       sonidos.pasos.pause();
-       sonidos.intro.pause();
-       sonidos.abrirCofre.play().catch(() => {});
-       
-       const finalScreen = document.getElementById('final-treasure-screen');
-       const rewardImg = document.getElementById('treasure-chest-anim');
-       
-       let rango = (puntosTotales >= 30) ? "¡CONCIENCIA BRILLANTE! 🌟" : 
-                   (puntosTotales >= 15) ? "CONCIENCIA EN CRECIMIENTO 🌱" : "CONCIENCIA EN CONSTRUCCIÓN 🧩";
-   
-       finalScreen.classList.remove('hidden');
-   
-       setTimeout(() => {
-           rewardImg.innerHTML = `
-               <img src="src/imgs/general/L8-Montaña-y-niños H (002).png" 
-                    alt="Encuentro en la Montaña" 
-                    style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 15px white); transform: scale(1.1); animation: bounceIn 0.8s ease;">
-           `;
-           rewardImg.classList.add('chest-open');
-           sonidos.victoria.play().catch(() => {});
-   
-           document.getElementById('final-rank-text').innerText = rango;
-           document.getElementById('stats-summary').innerHTML = `
-               <div style="margin-top: 10px; line-height: 1.5; color: white;">
-                   Has reunido <span style="font-weight:bold; color:var(--accent-gold);">${puntosTotales} puntos de fe</span>.<br>
-                   ¡Felicidades! Has tenido un encuentro con Dios en la montaña.
-               </div>
-           `;
-       }, 1000);
-   
-       document.getElementById('btn-restart').onclick = () => location.reload();
-   }
+    estaEnNivel = true;
+    sonidos.pasos.pause();
+    sonidos.intro.pause();
+    sonidos.abrirCofre.play().catch(() => {});
+    
+    const finalScreen = document.getElementById('final-treasure-screen');
+    const rewardImg = document.getElementById('treasure-chest-anim');
+    const statsSummary = document.getElementById('stats-summary');
+    
+    // Limpiar textos de rangos anteriores
+    const rankText = document.getElementById('final-rank-text');
+    if(rankText) rankText.innerText = ""; 
+
+    finalScreen.classList.remove('hidden');
+
+    setTimeout(() => {
+        // Inyectamos solo la imagen
+        rewardImg.innerHTML = `
+            <img src="src/imgs/general/L8-Montaña-y-niños H (002).png" 
+                 alt="Encuentro con Dios" 
+                 class="bounceIn">
+        `;
+        
+        sonidos.victoria.play().catch(() => {});
+
+        // Inyectamos el texto con el color correcto
+        statsSummary.innerHTML = `
+            <div style="text-align: center; font-family: var(--font-body); color: white;">
+                <p style="font-size: 1.6rem; margin-bottom: 8px;">
+                    Has reunido <span style="font-weight:bold; color:var(--accent-gold);">${puntosTotales} puntos </span>
+                </p>
+                <p style="font-size: 1.1rem; font-style: italic; opacity: 0.9;">
+                    ¡Felicidades! Has tenido un encuentro con Dios en la montaña.
+                </p>
+            </div>
+        `;
+    }, 800);
+
+    document.getElementById('btn-restart').onclick = () => location.reload();
+}
    
    initUI();
