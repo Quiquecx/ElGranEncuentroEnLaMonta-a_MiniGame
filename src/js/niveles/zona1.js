@@ -33,7 +33,7 @@
            fondo: new Image(), cofreC: new Image(),
            cofreA: new Image(), player: new Image()
        };
-       assets.fondo.src = 'src/imgs/fondos/fondo_level1.png';
+       assets.fondo.src = 'src/imgs/fondos/fondo_level01.png';
        assets.cofreC.src = 'src/imgs/general/L8 Cofre cerrado.png';
        assets.cofreA.src = 'src/imgs/general/L8 Cofre abierto.png';
        assets.player.src = 'src/imgs/protagonistas/Niña 01.png';

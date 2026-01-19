@@ -51,7 +51,7 @@ html, body {
 #game-container {
     width: 900px; 
     height: 600px;
-    aspect-ratio: 900 / 600; /* Asegura la proporción correcta */
+    aspect-ratio: 900 / 600; 
     position: relative; 
     transform: scale(var(--game-scale));
     transform-origin: center;
@@ -74,7 +74,11 @@ canvas {
     position: absolute;
     top: 0; left: 0;
     z-index: 1;
-    object-fit: contain; /* Evita que el contenido del canvas se estire */
+    /* CAMBIOS REALIZADOS PARA NITIDEZ: */
+    object-fit: fill; /* Cambiado de contain a fill para evitar bordes fantasma */
+    image-rendering: -webkit-optimize-contrast; /* Optimiza nitidez en Chrome/Safari */
+    image-rendering: crisp-edges;
+    image-rendering: pixelated; /* Evita que el fondo se vea borroso al escalar */
 }
 
 /* ======================================================================
@@ -101,7 +105,6 @@ canvas {
     z-index: 10; 
 }
 
-/* Título estilo Portada (Verde con borde blanco) */
 h1.main-title {
     font-family: var(--font-titles);
     color: var(--book-green);
@@ -109,7 +112,6 @@ h1.main-title {
     line-height: 0.85;
     margin-bottom: 5px;
     text-transform: uppercase;
-    /* Efecto Sticker Blanco */
     filter: drop-shadow(4px 4px 0px white) 
             drop-shadow(-4px -4px 0px white)
             drop-shadow(4px -4px 0px white)
@@ -155,7 +157,7 @@ button {
 }
 
 .btn-secondary, .choice { 
-    background: #f39200; /* Naranja del escudo '5 Primaria' */
+    background: #f39200; 
     box-shadow: 0 6px 0 #b36b00; 
 }
 
@@ -165,7 +167,7 @@ button:hover {
 }
 
 /* ======================================================================
-   4. CONTROLES TÁCTILES UNIVERSALES (CORREGIDO)
+   4. CONTROLES TÁCTILES UNIVERSALES
    ====================================================================== */
 #mobile-controls {
     position: absolute;
@@ -176,7 +178,7 @@ button:hover {
     justify-content: space-between;
     padding: 0 40px;
     z-index: 99999;
-    pointer-events: none; /* Permite clics a través del contenedor */
+    pointer-events: none; 
 }
 
 #mobile-controls:not(.hidden) {
@@ -184,7 +186,7 @@ button:hover {
 }
 
 .controls-left, .controls-right {
-    pointer-events: auto !important; /* Permite clics en las agrupaciones */
+    pointer-events: auto !important; 
 }
 
 .d-pad {
@@ -207,9 +209,9 @@ button:hover {
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none; /* Importante para juegos 2D */
+    touch-action: none; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    pointer-events: auto !important; /* Asegura detección de tacto */
+    pointer-events: auto !important; 
 }
 
 .touch-btn:active {
@@ -218,7 +220,7 @@ button:hover {
 }
 
 /* ======================================================================
-   5. MODALES Y HUD (CORREGIDO)
+   5. MODALES Y HUD
    ====================================================================== */
 .modal-content {
     background: #ffffff;
@@ -247,7 +249,6 @@ button:hover {
     pointer-events: none;
 }
 
-/* Permitimos clics en los elementos internos del HUD si fuera necesario */
 #gem-count-display {
     background: rgba(0,0,0,0.7);
     padding: 10px 20px;
@@ -269,23 +270,22 @@ button:hover {
 }
 
 /* ======================================================================
-   6. ESTILOS ESPECÍFICOS PARA LA PANTALLA FINAL - REPARADO
+   6. ESTILOS ESPECÍFICOS PARA LA PANTALLA FINAL
    ====================================================================== */
 #final-treasure-screen {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Alinea desde arriba */
-    padding: 15px; /* Reducido para ganar espacio vertical */
+    justify-content: flex-start; 
+    padding: 15px; 
     background: radial-gradient(circle, #3d1b4d 0%, #0b0b1a 100%);
     box-sizing: border-box;
     height: 100%;
 }
 
-/* Contenedor de la imagen: Limitamos su altura estrictamente */
 #treasure-chest-anim {
     width: 100%;
-    height: 280px; /* Altura máxima para la imagen en el canvas de 600px */
+    height: 280px; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -300,7 +300,6 @@ button:hover {
     filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
 }
 
-/* Contenedor de los puntos y felicitaciones */
 #stats-summary {
     margin: 5px 0;
     width: 100%;
@@ -308,11 +307,10 @@ button:hover {
     flex-shrink: 0;
 }
 
-/* Botón jugar de nuevo: Forzado a subir y centrarse */
 #btn-restart {
     margin-top: 5px;
     margin-bottom: 10px;
-    padding: 10px 30px; /* Un poco más pequeño para asegurar que quepa */
+    padding: 10px 30px; 
     width: auto;
     min-width: 220px;
     flex-shrink: 0;
