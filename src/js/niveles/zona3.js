@@ -120,7 +120,7 @@
                <div style="width: 100%; padding: 10px;">
                    <p style="color: #333 !important; margin-bottom: 25px; text-align: center; font-family: var(--font-body); font-size: 1.1rem; line-height: 1.4;">
                        Estás en la cumbre. Aquí cada elección cuenta.<br>
-                       Actúa según los mandamientos para alcanzar el tesoro final.
+                       Actúa según los mandamientos, toma las desiciones correctas.
                    </p>
                    <div style="display: flex; justify-content: center; width: 100%;">
                        <button class="choice" id="btn-comenzar-z3" style="width: 220px;">¡COMENZAR!</button>

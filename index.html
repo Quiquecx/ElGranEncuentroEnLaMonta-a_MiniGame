@@ -6,6 +6,34 @@
     <title>La Gran Expedición a la Montaña Sagrada</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos específicos para las nuevas imágenes */
+        .book-title-img {
+            max-width: 80%;
+            height: auto;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+        }
+
+        .corner-cross {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 60px; /* Ajusta el tamaño según prefieras */
+            height: auto;
+            opacity: 0.8;
+            pointer-events: none; /* Para que no interfiera con clicks */
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 20px;
+        }
+    </style>
 </head>
 <body>
 
@@ -13,8 +41,9 @@
         
         <div id="menu" class="screen">
             <div class="header-container">
-                <h1 class="main-title">EL GRAN <br> <span>ENCUENTRO</span></h1>
-                <h2 class="sub-title">en la montaña</h2>
+                <img src="src/imgs/general/Titulo_Escolar_Renovado-Primaria-Libro_05.png" 
+                     alt="El Gran Encuentro" 
+                     class="book-title-img">
             </div>
             
             <p class="intro-text">Celebramos, oramos y vivimos nuestra fe</p>
@@ -29,6 +58,10 @@
             <footer class="copyright-notice">
                 © Todos los derechos reservados Librerías y Ediciones Casa del Catequista
             </footer>
+
+            <img src="src/imgs/general/logo corto de cruz.png" 
+                 alt="Cruz" 
+                 class="corner-cross">
         </div>
 
         <div id="howto-screen" class="screen hidden">
@@ -78,7 +111,7 @@
 
         <div id="final-treasure-screen" class="screen hidden">
             <div class="modal-content transparent" style="background: rgba(0,0,0,0.8); border:none;">
-                <h1 id="final-title" style="color: white; font-family: var(--font-titles);">¡EL TESORO DE LA MONTAÑA!</h1>
+                <h1 id="final-title" style="color: white; font-family: var(--font-titles);">¡FELICIDADES!</h1>
                 
                 <div id="treasure-chest-anim"></div>
                 

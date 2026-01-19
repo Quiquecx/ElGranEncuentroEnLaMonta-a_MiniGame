@@ -258,7 +258,7 @@
                     Has reunido <span style="font-weight:bold; color:var(--accent-gold);">${puntosTotales} puntos </span>
                 </p>
                 <p style="font-size: 1.1rem; font-style: italic; opacity: 0.9;">
-                    ¡Felicidades! Has tenido un encuentro con Dios en la montaña.
+                    ¡Has tenido un encuentro con Dios en la montaña!.
                 </p>
             </div>
         `;
