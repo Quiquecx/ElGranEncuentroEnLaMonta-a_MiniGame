@@ -27,10 +27,31 @@
    sonidos.intro.volume = 0.5;
    sonidos.pasos.loop = true;
    
-   const mapImg = new Image(); mapImg.src = 'src/imgs/fondos/fondo.png'; 
-   const playerImg = new Image(); playerImg.src = 'src/imgs/protagonistas/Niña 01.png';
+   const mapImg = new Image(); 
+   mapImg.src = 'src/imgs/fondos/fondo.png'; 
    
-   let player = { x: 450, y: 300, speed: 6, w: 60, h: 70 }; 
+   /* --- CARGA Y ANIMACIÓN DE SPRITES DE SOFI --- */
+   const TOTAL_FRAMES = 9;
+   const framesSofi = [];
+   for (let i = 1; i <= TOTAL_FRAMES; i++) {
+       const img = new Image();
+       const num = i < 10 ? `0${i}` : i;
+       img.src = `src/imgs/protagonistas/Sofi_camina-${num}.png`;
+       framesSofi.push(img);
+   }
+   
+   let player = { 
+       x: 450, 
+       y: 300, 
+       speed: 6, 
+       w: 95, 
+       h: 110,
+       currentFrame: 0,
+       frameTimer: 0,
+       frameDelay: 5, // Cambia de frame cada 5 tics del gameLoop
+       mirandoIzquierda: false
+   }; 
+   
    let gameActive = false;
    let gamePaused = false; 
    let estaEnNivel = false; 
@@ -49,7 +70,6 @@
    function resizeGame() {
        const width = window.innerWidth;
        const height = window.innerHeight;
-       // El '1' al final de Math.min bloquea que el juego crezca más de 900x600
        const scale = Math.min(width / BASE_WIDTH, height / BASE_HEIGHT, 1);
        document.documentElement.style.setProperty('--game-scale', scale * 0.98);
    }
@@ -117,7 +137,6 @@
    }
    
    function gameLoop() {
-       // Verificamos si hay algún modal abierto para pausar el movimiento
        const isModalOpen = !document.getElementById('howto-screen').classList.contains('hidden');
        
        if (gameActive && !estaEnNivel && !isModalOpen) {
@@ -129,15 +148,32 @@
    
    function update() {
        let moviendose = false;
+       
        if (keys['ArrowUp'] || keys['KeyW']) { player.y -= player.speed; moviendose = true; }
        if (keys['ArrowDown'] || keys['KeyS']) { player.y += player.speed; moviendose = true; }
-       if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; moviendose = true; }
-       if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; moviendose = true; }
+       if (keys['ArrowLeft'] || keys['KeyA']) { 
+           player.x -= player.speed; 
+           moviendose = true; 
+           player.mirandoIzquierda = true;
+       }
+       if (keys['ArrowRight'] || keys['KeyD']) { 
+           player.x += player.speed; 
+           moviendose = true; 
+           player.mirandoIzquierda = false;
+       }
    
        if (moviendose) {
            if (sonidos.pasos.paused) sonidos.pasos.play().catch(()=>{});
+           
+           // Animación de secuencia de imágenes
+           player.frameTimer++;
+           if (player.frameTimer >= player.frameDelay) {
+               player.frameTimer = 0;
+               player.currentFrame = (player.currentFrame + 1) % TOTAL_FRAMES;
+           }
        } else {
            sonidos.pasos.pause();
+           player.currentFrame = 0; // Se resetea al frame de reposo
        }
    
        player.x = Math.max(20, Math.min(BASE_WIDTH - 20, player.x));
@@ -187,17 +223,17 @@
    }
    
    function finalizarNivel(puntosObtenidos = 0) {
-    estaEnNivel = false;
-    puntosTotales += puntosObtenidos;
-    zonasCompletadas++; 
-    document.getElementById('gem-count').innerText = puntosTotales;
-    vincularControlesTactiles();
-    sonidos.victoria.play().catch(()=>{});
-    setTimeout(() => { 
-        if(!estaEnNivel && !gamePaused) sonidos.intro.play().catch(()=>{}); 
-    }, 1000);
-    player.x += 40; player.y += 40;
-}
+       estaEnNivel = false;
+       puntosTotales += puntosObtenidos;
+       zonasCompletadas++; 
+       document.getElementById('gem-count').innerText = puntosTotales;
+       vincularControlesTactiles();
+       sonidos.victoria.play().catch(()=>{});
+       setTimeout(() => { 
+           if(!estaEnNivel && !gamePaused) sonidos.intro.play().catch(()=>{}); 
+       }, 1000);
+       player.x += 40; player.y += 40;
+   }
    
    function draw() {
        ctx.clearRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
@@ -220,51 +256,58 @@
        dibujarIndicador(PUNTOS_ENTRADA.zona3, "💎", zonasCompletadas < 2 ? 0 : (zonasCompletadas === 2 ? 1 : 2));
        dibujarIndicador(PUNTOS_ENTRADA.tesoro, "👑", zonasCompletadas < 3 ? 0 : 1);
    
-       if (playerImg.complete) {
-           ctx.drawImage(playerImg, player.x - (player.w/2), player.y - (player.h/2), player.w, player.h);
+       // --- DIBUJAR JUGADOR CON ANIMACIÓN Y FLIP HORIZONTAL ---
+       const currentImg = framesSofi[player.currentFrame];
+       if (currentImg && currentImg.complete) {
+           ctx.save();
+           if (player.mirandoIzquierda) {
+               ctx.translate(player.x, player.y);
+               ctx.scale(-1, 1);
+               ctx.drawImage(currentImg, -(player.w / 2), -(player.h / 2), player.w, player.h);
+           } else {
+               ctx.drawImage(currentImg, player.x - (player.w / 2), player.y - (player.h / 2), player.w, player.h);
+           }
+           ctx.restore();
        }
    }
    
    function mostrarCofreFinal() {
-    estaEnNivel = true;
-    sonidos.pasos.pause();
-    sonidos.intro.pause();
-    sonidos.abrirCofre.play().catch(() => {});
-    
-    const finalScreen = document.getElementById('final-treasure-screen');
-    const rewardImg = document.getElementById('treasure-chest-anim');
-    const statsSummary = document.getElementById('stats-summary');
-    
-    // Limpiar textos de rangos anteriores
-    const rankText = document.getElementById('final-rank-text');
-    if(rankText) rankText.innerText = ""; 
-
-    finalScreen.classList.remove('hidden');
-
-    setTimeout(() => {
-        // Inyectamos solo la imagen
-        rewardImg.innerHTML = `
-            <img src="src/imgs/general/L8-Montaña-y-niños H (002).png" 
-                 alt="Encuentro con Dios" 
-                 class="bounceIn">
-        `;
-        
-        sonidos.victoria.play().catch(() => {});
-
-        // Inyectamos el texto con el color correcto
-        statsSummary.innerHTML = `
-            <div style="text-align: center; font-family: var(--font-body); color: white;">
-                <p style="font-size: 1.6rem; margin-bottom: 8px;">
-                    Has reunido <span style="font-weight:bold; color:var(--accent-gold);">${puntosTotales} puntos </span>
-                </p>
-                <p style="font-size: 1.1rem; font-style: italic; opacity: 0.9;">
-                    ¡Has tenido un encuentro con Dios en la montaña!.
-                </p>
-            </div>
-        `;
-    }, 800);
-
-    document.getElementById('btn-restart').onclick = () => location.reload();
-}
+       estaEnNivel = true;
+       sonidos.pasos.pause();
+       sonidos.intro.pause();
+       sonidos.abrirCofre.play().catch(() => {});
+       
+       const finalScreen = document.getElementById('final-treasure-screen');
+       const rewardImg = document.getElementById('treasure-chest-anim');
+       const statsSummary = document.getElementById('stats-summary');
+       
+       const rankText = document.getElementById('final-rank-text');
+       if(rankText) rankText.innerText = ""; 
+   
+       finalScreen.classList.remove('hidden');
+   
+       setTimeout(() => {
+           rewardImg.innerHTML = `
+               <img src="src/imgs/general/L8-Montaña-y-niños H (002).png" 
+                    alt="Encuentro con Dios" 
+                    class="bounceIn">
+           `;
+           
+           sonidos.victoria.play().catch(() => {});
+   
+           statsSummary.innerHTML = `
+               <div style="text-align: center; font-family: var(--font-body); color: white;">
+                   <p style="font-size: 1.6rem; margin-bottom: 8px;">
+                       Has reunido <span style="font-weight:bold; color:var(--accent-gold);">${puntosTotales} puntos </span>
+                   </p>
+                   <p style="font-size: 1.1rem; font-style: italic; opacity: 0.9;">
+                       ¡Has tenido un encuentro con Dios en la montaña!.
+                   </p>
+               </div>
+           `;
+       }, 800);
+   
+       document.getElementById('btn-restart').onclick = () => location.reload();
+   }
    
    initUI();

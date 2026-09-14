@@ -1,5 +1,5 @@
 /* ======================================================================
-   ZONA 2: EL SENDERO DEL ESPÍRITU - CORREGIDO (LÓGICA DE PUNTOS DINÁMICA)
+   ZONA 2: EL SENDERO DEL ESPÍRITU - ANIMADO Y REAJUSTADO AL TAMAÑO REAL
    ====================================================================== */
    import { zona2Data } from '../../data/preguntas.js';
    import { sonidos } from '../main.js'; 
@@ -20,8 +20,7 @@
    
        const VIEWPORT_WIDTH = 900;
        const WORLD_WIDTH = 3000; 
-       const GROUND_Y = 450;
-       
+   
        let nivelActivo = false;
        let esperandoRespuesta = false;
        let cameraX = 0;
@@ -32,20 +31,50 @@
    
        const assets = {
            fondo: new Image(),
-           player: new Image(),
            cofreCerrado: new Image(),
            cofreAbierto: new Image()
        };
        assets.fondo.src = 'src/imgs/fondos/fondo_level02.png';
-       assets.player.src = 'src/imgs/protagonistas/Niña 01.png';
        assets.cofreCerrado.src = 'src/imgs/general/L8 Cofre cerrado.png';
        assets.cofreAbierto.src = 'src/imgs/general/L8 Cofre abierto.png';
    
+       /* --- PRECARGA DE FRAMES DE CAMINADO (MISMO SPRITE Y PROPORCIÓN) --- */
+       const TOTAL_FRAMES_CAMINA = 9;
+       const framesCaminar = [];
+   
+       for (let i = 1; i <= TOTAL_FRAMES_CAMINA; i++) {
+           const num = i < 10 ? `0${i}` : i;
+           const imgCamina = new Image();
+           imgCamina.src = `src/imgs/protagonistas/Sofi_camina-${num}.png`;
+           framesCaminar.push(imgCamina);
+       }
+   
+       // DIMENSIONES Y PADDING RÉPLICA DE LA ZONA 1
        let player = { 
-           x: 100, y: GROUND_Y, w: 70, h: 90, 
-           speed: 7, vy: 0, gravity: 0.6, jumpPower: -14, 
-           isJumping: false, facingRight: true 
+           x: 100, y: 300, 
+           w: 155, h: 165,
+           paddingX: 45,
+           paddingBottom: 35,
+           speed: 5.5, vy: 0, gravity: 0.65, jumpPower: -17.5, 
+           isJumping: false, facingRight: true,
+           currentFrameCamina: 0,
+           frameTimerCamina: 0,
+           frameDelay: 5
        };
+   
+       // Nivel del suelo igualado con la Zona 1
+       const GROUND_SURFACE = 540; 
+       const GROUND_Y = GROUND_SURFACE - (player.h - player.paddingBottom);
+   
+       function getPlayerHitbox() {
+           return {
+               x: player.x + player.paddingX,
+               y: player.y,
+               w: player.w - (player.paddingX * 2),
+               h: player.h - player.paddingBottom,
+               feetY: player.y + (player.h - player.paddingBottom)
+           };
+       }
    
        const keys = {};
    
@@ -61,7 +90,7 @@
            abierto: false
        }));
    
-       // --- SISTEMA DE CONTROLES (IGUAL A MAIN Y ZONA 1) ---
+       // --- CONTROLES Y MOVIMIENTO ---
        const saltar = () => {
            if (!player.isJumping && !esperandoRespuesta && nivelActivo) {
                player.vy = player.jumpPower; 
@@ -267,18 +296,44 @@
    
        function update() {
            if (!nivelActivo || esperandoRespuesta) return;
-           if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; player.facingRight = true; }
-           else if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; player.facingRight = false; }
+   
+           let moviendose = false;
+           if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; player.facingRight = true; moviendose = true; }
+           else if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; player.facingRight = false; moviendose = true; }
            
-           player.vy += player.gravity; player.y += player.vy;
-           if (player.y > GROUND_Y) { player.y = GROUND_Y; player.vy = 0; player.isJumping = false; }
+           // Ciclo de animación del sprite al caminar
+           if (moviendose) {
+               if (!player.isJumping && sonidos.pasos.paused) sonidos.pasos.play().catch(() => {});
+               
+               player.frameTimerCamina++;
+               if (player.frameTimerCamina >= player.frameDelay) {
+                   player.frameTimerCamina = 0;
+                   player.currentFrameCamina = (player.currentFrameCamina + 1) % TOTAL_FRAMES_CAMINA;
+               }
+           } else {
+               if (!player.isJumping) sonidos.pasos.pause();
+               player.currentFrameCamina = 0;
+           }
+   
+           player.vy += player.gravity; 
+           player.y += player.vy;
+   
+           if (player.y > GROUND_Y) { 
+               player.y = GROUND_Y; 
+               player.vy = 0; 
+               player.isJumping = false; 
+           }
            
            player.x = Math.max(0, Math.min(WORLD_WIDTH - player.w, player.x));
            cameraX = Math.max(0, Math.min(WORLD_WIDTH - VIEWPORT_WIDTH, player.x - VIEWPORT_WIDTH / 2));
            
+           const box = getPlayerHitbox();
+   
            cofres.forEach(cofre => {
-               if (!cofre.abierto && Math.abs(player.x - cofre.x) < 40 && Math.abs(player.y - cofre.y) < 60) {
-                   abrirReto(cofre);
+               if (!cofre.abierto) {
+                   const colH = box.x + box.w > cofre.x && box.x < cofre.x + cofre.w;
+                   const colV = box.feetY > cofre.y && box.y < cofre.y + cofre.h;
+                   if (colH && colV) abrirReto(cofre);
                }
            });
        }
@@ -287,54 +342,87 @@
            ctx.clearRect(0, 0, canvas.width, canvas.height);
            ctx.save();
            ctx.translate(-Math.floor(cameraX), 0);
+   
            if (assets.fondo.complete) ctx.drawImage(assets.fondo, 0, 0, WORLD_WIDTH, canvas.height);
+   
            cofres.forEach(c => {
                let img = c.abierto ? assets.cofreAbierto : assets.cofreCerrado;
                if (img.complete) ctx.drawImage(img, c.x, c.y, c.w, c.h);
            });
-           if (assets.player.complete) {
+   
+           // Dibujar frame actual de la caminata con volteo horizontal
+           const currentImg = framesCaminar[player.currentFrameCamina];
+           if (currentImg && currentImg.complete) {
                ctx.save();
+               const px = Math.floor(player.x);
+               const py = Math.floor(player.y);
+   
                if (!player.facingRight) {
-                   ctx.translate(player.x + player.w, player.y); ctx.scale(-1, 1);
-                   ctx.drawImage(assets.player, 0, 0, player.w, player.h);
-               } else { ctx.drawImage(assets.player, player.x, player.y, player.w, player.h); }
+                   ctx.translate(px + player.w, py); 
+                   ctx.scale(-1, 1);
+                   ctx.drawImage(currentImg, 0, 0, player.w, player.h);
+               } else { 
+                   ctx.drawImage(currentImg, px, py, player.w, player.h); 
+               }
                ctx.restore();
            }
+   
            ctx.restore();
        }
    
        function loop() {
            if (nivelActivo || esperandoRespuesta) {
-               update(); draw();
+               update(); 
+               draw();
                requestID = requestAnimationFrame(loop);
            }
        }
    
-       // Inicialización
+       // Inicialización de controles
        window.addEventListener('keydown', handleKeyDown);
        window.addEventListener('keyup', handleKeyUp);
        vincularControlesTactiles();
    
-       // Mostrar mensaje de inicio
-       esperandoRespuesta = true;
-       modal.classList.remove('hidden');
-       imgElement.style.display = 'none';
-       titulo.innerText = "EL SENDERO DEL ESPÍRITU";
-       container.innerHTML = `
-           <div style="text-align:center;">
-               <p style="color:#333; font-weight:bold; margin-bottom:20px; font-size:1.2rem;">
-                   Ordena los mensajes y resuelve los dilemas para llegar a la cima.
-               </p>
-               <button class="choice" id="btn-start-z2" style="padding:15px 40px; font-size:1.2rem;">
-                   ¡COMENZAR!
-               </button>
-           </div>
-       `;
+       // Precarga e Inicio del Nivel
+       const todasLasImagenes = [...framesCaminar, assets.fondo, assets.cofreCerrado, assets.cofreAbierto];
+       let cargadas = 0;
+       let nivelIniciado = false;
    
-       document.getElementById('btn-start-z2').onclick = () => {
-           modal.classList.add('hidden');
-           esperandoRespuesta = false;
-           nivelActivo = true;
-           loop();
+       const intentarIniciar = () => {
+           if (!nivelIniciado) {
+               nivelIniciado = true;
+               esperandoRespuesta = true;
+               modal.classList.remove('hidden');
+               imgElement.style.display = 'none';
+               titulo.innerText = "EL SENDERO DEL ESPÍRITU";
+               container.innerHTML = `
+                   <div style="text-align:center;">
+                       <p style="color:#333; font-weight:bold; margin-bottom:20px; font-size:1.2rem;">
+                           Ordena los mensajes y resuelve los dilemas para llegar a la cima.
+                       </p>
+                       <button class="choice" id="btn-start-z2" style="padding:15px 40px; font-size:1.2rem;">
+                           ¡COMENZAR!
+                       </button>
+                   </div>
+               `;
+   
+               document.getElementById('btn-start-z2').onclick = () => {
+                   modal.classList.add('hidden');
+                   esperandoRespuesta = false;
+                   nivelActivo = true;
+                   loop();
+               };
+           }
        };
+   
+       todasLasImagenes.forEach(img => {
+           if (img.complete) {
+               cargadas++;
+           } else {
+               img.onload = () => { cargadas++; if (cargadas >= todasLasImagenes.length) intentarIniciar(); };
+               img.onerror = () => { cargadas++; if (cargadas >= todasLasImagenes.length) intentarIniciar(); };
+           }
+       });
+   
+       if (cargadas >= todasLasImagenes.length) intentarIniciar();
    }

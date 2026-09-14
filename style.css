@@ -74,13 +74,10 @@ canvas {
     position: absolute;
     top: 0; left: 0;
     z-index: 1;
-    /* CAMBIOS REALIZADOS PARA NITIDEZ: */
-    object-fit: fill; /* Cambiado de contain a fill para evitar bordes fantasma */
-    image-rendering: -webkit-optimize-contrast; /* Optimiza nitidez en Chrome/Safari */
-    image-rendering: crisp-edges;
-    image-rendering: pixelated; /* Evita que el fondo se vea borroso al escalar */
+    object-fit: fill;
+    /* Ajuste para renderizado suave en ilustraciones 2D */
+    image-rendering: auto; 
 }
-
 /* ======================================================================
    2. PANTALLAS (ESTILO PORTADA DE LIBRO)
    ====================================================================== */
